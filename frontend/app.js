@@ -15,6 +15,7 @@
 
   let cfg = { refresh: { frontend_seconds: 15 }, units: {} };
   let lastSuccess = null; // Date of last good payload, for "updated X ago"
+  let liveWind = null; // { obs, receivedAt } — latest live wind reading, if any
 
   // --- Clock ---------------------------------------------------------------
   function tickClock() {
@@ -33,6 +34,10 @@
   }
 
   function updateAgo() {
+    // Keep the live-wind "X min ago" label ticking for periodic (non-live) sources.
+    if (isLiveWindFresh() && liveWind.obs && !liveWind.obs.live) {
+      setWindSource(liveWind.obs);
+    }
     if (!lastSuccess) return;
     const secs = Math.round((Date.now() - lastSuccess.getTime()) / 1000);
     let txt;
@@ -98,6 +103,80 @@
     img.src = w.house_image;
   }
 
+  // --- Wind: live source (WebSocket) with forecast fallback ----------------
+  const LIVE_STALE_MS = 12 * 60 * 1000; // fall back to forecast if no live msg this long
+
+  function isLiveWindFresh() {
+    return !!liveWind && Date.now() - liveWind.receivedAt < LIVE_STALE_MS;
+  }
+
+  // Render a wind reading from either the forecast (/api/all) or a live obs.
+  function applyWind(w) {
+    $("wind-speed").textContent = num(w.wind_speed_mph);
+    $("wind-gust").textContent = num(w.wind_gust_mph);
+    $("wind-cardinal").textContent = w.wind_direction_cardinal || "--";
+    setNeedle(arrowBearing(w.wind_direction_deg));
+    const gustEl = document.querySelector(".wind-gust");
+    const gusty = w.wind_gust_mph && w.wind_speed_mph && w.wind_gust_mph - w.wind_speed_mph >= 8;
+    gustEl.classList.toggle("high", !!gusty);
+  }
+
+  function srcLabel(source) {
+    if (!source) return "";
+    if (source === "simulator") return "Simulated";
+    if (source.startsWith("nws-station:")) return source.split(":")[1];
+    return source;
+  }
+
+  function agoText(iso) {
+    if (!iso) return "";
+    const secs = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+    if (secs < 90) return "just now";
+    if (secs < 3600) return `${Math.floor(secs / 60)} min ago`;
+    return `${Math.floor(secs / 3600)} h ago`;
+  }
+
+  function setWindSource(obs) {
+    const el = $("wind-source");
+    if (!obs) { el.textContent = "Forecast"; return; }
+    if (obs.live) {
+      el.innerHTML = `<span class="ld live"></span> LIVE · ${srcLabel(obs.source)}`;
+    } else {
+      const ago = agoText(obs.observed_at);
+      el.innerHTML = `<span class="ld obs"></span> ${srcLabel(obs.source)}${ago ? " · " + ago : ""}`;
+    }
+  }
+
+  function connectLiveWind() {
+    let retry = 1000;
+    const open = () => {
+      let ws;
+      try {
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        ws = new WebSocket(`${proto}://${location.host}/ws/live`);
+      } catch (_) {
+        scheduleReconnect();
+        return;
+      }
+      ws.onmessage = (ev) => {
+        try {
+          const obs = JSON.parse(ev.data);
+          liveWind = { obs, receivedAt: Date.now() };
+          applyWind(obs);
+          setWindSource(obs);
+          retry = 1000;
+        } catch (_) { /* ignore malformed */ }
+      };
+      ws.onclose = () => { liveWind = null; scheduleReconnect(); };
+      ws.onerror = () => { try { ws.close(); } catch (_) {} };
+    };
+    const scheduleReconnect = () => {
+      setTimeout(open, retry);
+      retry = Math.min(retry * 2, 15000);
+    };
+    open();
+  }
+
   // --- Time formatting from ISO --------------------------------------------
   function fmtHour(iso) {
     const d = new Date(iso);
@@ -143,14 +222,11 @@
       $("precip-chance").textContent = num(daily[0].precip_probability_pct);
     }
 
-    // Wind
-    $("wind-speed").textContent = num(c.wind_speed_mph);
-    $("wind-gust").textContent = num(c.wind_gust_mph);
-    $("wind-cardinal").textContent = c.wind_direction_cardinal || "--";
-    setNeedle(arrowBearing(c.wind_direction_deg));
-    const gustEl = document.querySelector(".wind-gust");
-    const gusty = c.wind_gust_mph && c.wind_speed_mph && c.wind_gust_mph - c.wind_speed_mph >= 8;
-    gustEl.classList.toggle("high", !!gusty);
+    // Wind — a fresh live source is authoritative; otherwise use the forecast.
+    if (!isLiveWindFresh()) {
+      applyWind(c);
+      setWindSource(null);
+    }
   }
 
   function pressureValue(inhg) {
@@ -270,6 +346,7 @@
     await refresh();
     const everyMs = Math.max(5, (cfg.refresh && cfg.refresh.frontend_seconds) || 15) * 1000;
     setInterval(refresh, everyMs);
+    connectLiveWind();
   }
 
   if (document.readyState === "loading") {

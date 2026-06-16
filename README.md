@@ -19,8 +19,11 @@ Working vertical slice — live data end to end:
 - ✅ Stale-data handling — keeps last good data and flags it when a fetch fails
 - ✅ NWS severe-weather alerts (U.S.) — fetched, normalized, and shown as a
   severity-colored banner
+- ✅ Live wind over a WebSocket (`/ws/live`) — nearest NWS station observations
+  or a simulator; the wind widget switches to live and falls back to forecast
 - ⏳ Kiosk autostart hardening on the Pi (files provided, not yet installed)
-- ⏳ Real-time personal weather station source (Tempest / Ambient stubs)
+- ⏳ Real-time hardware wind source (Tempest / Ambient / GPIO) — drops into the
+  live-wind manager with no frontend changes
 
 ## Quick start (development, any machine)
 
@@ -75,21 +78,43 @@ Two easy ways to get an image:
 The image is shown only when `house_image` is set; the compass ring fades so the
 image reads through.
 
+## Live wind
+
+The wind widget can switch from forecast values to a live feed pushed over a
+WebSocket (`/ws/live`), and falls back to the forecast automatically when no live
+data is available. Configure it under `live_wind:` in your config:
+
+- `source: "nws_station"` — real measured wind from the nearest NWS observation
+  station (free, no key, U.S. only). Polled every `poll_seconds`; the widget
+  labels it with the station id and observation age, e.g. `● KMSN · 14 min ago`.
+- `source: "simulator"` — smoothly-varying fake wind emitted every
+  `simulator.update_seconds`, labeled `● LIVE · Simulated`. Handy for demos and
+  for seeing the real-time motion before you have hardware.
+- `source: "off"` — disable the live feed; the widget just uses the forecast.
+
+These are *real* observations or simulated data — public forecast APIs don't
+update every few seconds. For genuinely real-time wind, add a personal weather
+station (WeatherFlow Tempest, Ambient Weather) or a DIY GPIO anemometer as a new
+source in [backend/live_wind.py](backend/live_wind.py); the WebSocket and frontend
+need no changes.
+
 ## Project layout
 
 ```text
 config.yaml              # user-adjustable settings (location, units, refresh)
 requirements.txt
 backend/
-  app.py                 # FastAPI app + API endpoints, serves the frontend
+  app.py                 # FastAPI app + API/WS endpoints, serves the frontend
   cache.py               # in-memory store + background poll loops
+  live_wind.py           # live-wind manager + /ws/live broadcast + simulator
   models.py              # normalized Pydantic data model
   utils.py               # config loading, unit conversions, WMO code mapping
   weather_sources/
-    open_meteo.py        # live: current/hourly/daily fetch + normalize
-    nws.py               # stub: U.S. severe-weather alerts (Phase 3)
-    tempest.py           # stub: WeatherFlow Tempest live wind (Phase 5)
-    ambient.py           # stub: Ambient Weather (Phase 5)
+    open_meteo.py        # current/hourly/daily forecast fetch + normalize
+    nws.py               # U.S. severe-weather alerts
+    nws_station.py       # nearest NWS station live wind observations
+    tempest.py           # stub: WeatherFlow Tempest live wind (future)
+    ambient.py           # stub: Ambient Weather (future)
 frontend/
   index.html             # dashboard markup
   styles.css             # dark glass-card theme, CSS Grid (3:2, adapts to 16:9/16:10)
@@ -111,6 +136,7 @@ kiosk/autostart-example.desktop
 | `GET /api/status`  | API health / freshness                          |
 | `GET /api/config`  | Frontend-relevant config slice                  |
 | `GET /healthz`     | Liveness probe (used by the kiosk launcher)     |
+| `WS  /ws/live`     | Live wind feed (nearest NWS station or simulator) |
 
 ## Deploying on the Raspberry Pi
 
@@ -144,4 +170,5 @@ kiosk/autostart-example.desktop
 
 - Validate Pi 4 performance with the mock dashboard (see plan §16).
 - Harden kiosk autostart on real Pi hardware.
-- Optionally add a Tempest/Ambient live wind source (plan Phase 5).
+- Add a real-time hardware wind source (Tempest / Ambient / GPIO) into the
+  live-wind manager (plan Phase 5).

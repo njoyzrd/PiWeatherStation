@@ -48,3 +48,13 @@ wind:
   house_image: ""
   # Rotate the image (degrees) so real-world north points up on the compass.
   house_image_rotation_deg: 0
+
+# Live wind feed pushed to the dashboard over a WebSocket (/ws/live). The wind
+# widget switches to this when available and falls back to the forecast otherwise.
+live_wind:
+  enabled: true
+  source: "nws_station"   # nws_station (real obs, free) | simulator | off
+  poll_seconds: 180       # nws_station: how often to poll the nearest station
+  simulator:
+    base_speed_mph: 8
+    update_seconds: 2     # how often the simulator emits a reading

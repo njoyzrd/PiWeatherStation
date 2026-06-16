@@ -76,6 +76,23 @@ class Alert(BaseModel):
     source: str = "nws"
 
 
+class WindObservation(BaseModel):
+    """A single live wind reading pushed over /ws/live by a live source.
+
+    `live=True` means a genuinely continuous source (simulator/hardware);
+    `live=False` means periodic real observations (e.g. an NWS station).
+    """
+
+    wind_speed_mph: Optional[float] = None
+    wind_gust_mph: Optional[float] = None
+    wind_direction_deg: Optional[float] = None
+    wind_direction_cardinal: Optional[str] = None
+    observed_at: Optional[str] = None
+    source: str = "live"
+    live: bool = False
+    interval_seconds: Optional[float] = None
+
+
 class Status(BaseModel):
     api_ok: bool = False
     stale: bool = False
