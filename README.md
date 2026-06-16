@@ -17,7 +17,8 @@ Working vertical slice — live data end to end:
 - ✅ Dashboard: current conditions, animated wind compass, hourly strip, 7-day
   forecast, humidity / dew point / pressure / UV, sunrise / sunset, live clock
 - ✅ Stale-data handling — keeps last good data and flags it when a fetch fails
-- ⏳ NWS severe-weather alerts (wired in as a stub — `backend/weather_sources/nws.py`)
+- ✅ NWS severe-weather alerts (U.S.) — fetched, normalized, and shown as a
+  severity-colored banner
 - ⏳ Kiosk autostart hardening on the Pi (files provided, not yet installed)
 - ⏳ Real-time personal weather station source (Tempest / Ambient stubs)
 
@@ -106,7 +107,7 @@ kiosk/autostart-example.desktop
 | `GET /api/current` | Current conditions                              |
 | `GET /api/hourly`  | Hourly forecast (starts at the current hour)    |
 | `GET /api/daily`   | 7-day forecast                                  |
-| `GET /api/alerts`  | Active alerts (empty until NWS is implemented)  |
+| `GET /api/alerts`  | Active U.S. NWS alerts (most severe first)      |
 | `GET /api/status`  | API health / freshness                          |
 | `GET /api/config`  | Frontend-relevant config slice                  |
 | `GET /healthz`     | Liveness probe (used by the kiosk launcher)     |
@@ -114,24 +115,33 @@ kiosk/autostart-example.desktop
 ## Deploying on the Raspberry Pi
 
 1. Clone the repo to `/home/pi/PiWeatherStation` and create the venv as above.
-2. Install the backend service (edit paths/user inside the file first):
+2. Create your local config (gitignored, so it isn't in the clone):
+   ```bash
+   cp config.example.yaml config.yaml      # then edit location/units/features
+   ```
+3. (Optional) Add your aerial house image for the wind compass — also gitignored,
+   so copy it over manually and point `wind.house_image` at it in `config.yaml`:
+   ```bash
+   cp /path/to/your-aerial.png frontend/icons/house.png
+   ```
+4. Install the backend service (edit paths/user inside the file first):
    ```bash
    sudo cp systemd/weatherpi.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable --now weatherpi.service
    ```
-3. Autostart Chromium in kiosk mode:
+5. Autostart Chromium in kiosk mode:
    ```bash
    sudo apt install unclutter
    mkdir -p ~/.config/autostart
    cp kiosk/autostart-example.desktop ~/.config/autostart/weatherpi-kiosk.desktop
    # edit the Exec path in that file if your install dir differs
    ```
-4. Reboot. The Pi auto-logs in, the backend starts, and Chromium opens the
+6. Reboot. The Pi auto-logs in, the backend starts, and Chromium opens the
    dashboard full-screen at <http://localhost:8000>.
 
 ## Next steps
 
-- Implement `backend/weather_sources/nws.py` and render the alert banner.
 - Validate Pi 4 performance with the mock dashboard (see plan §16).
+- Harden kiosk autostart on real Pi hardware.
 - Optionally add a Tempest/Ambient live wind source (plan Phase 5).
