@@ -1,0 +1,16 @@
+[Unit]
+Description=WeatherPi Backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Adjust WorkingDirectory and User to match your install location and account.
+WorkingDirectory=/home/pi/PiWeatherStation
+ExecStart=/home/pi/PiWeatherStation/.venv/bin/uvicorn backend.app:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+User=pi
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+weatherpi-shot.png
+
+# Personal/local config and assets — kept out of the public repo.
+# Copy config.example.yaml to config.yaml and add your own location.
+config.yaml
+frontend/icons/house.png
+# Source aerial/satellite photos of the home (privacy).
+myhouse*.png
+*house*.png

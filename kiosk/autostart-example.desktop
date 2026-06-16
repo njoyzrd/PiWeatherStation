@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=WeatherPi Kiosk
+Comment=Launch the WeatherPi dashboard full-screen at login
+# Copy to ~/.config/autostart/weatherpi-kiosk.desktop and fix the path below.
+Exec=/home/pi/PiWeatherStation/kiosk/chromium-kiosk.sh
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,50 @@
+# WeatherPi configuration example.
+# Copy this file to config.yaml and edit it for your location and preferences:
+#   cp config.example.yaml config.yaml
+# config.yaml is gitignored so your personal location/settings stay local.
+
+location:
+  name: "Milwaukee, WI"
+  latitude: 43.0389
+  longitude: -87.9065
+  timezone: "America/Chicago"
+
+units:
+  temperature: "fahrenheit"   # fahrenheit | celsius
+  wind_speed: "mph"           # mph | kmh | ms | kn
+  precipitation: "inch"       # inch | mm
+  pressure: "inhg"            # inhg | hpa
+
+server:
+  host: "127.0.0.1"
+  port: 8000
+
+refresh:
+  frontend_seconds: 15
+  open_meteo_current_minutes: 5
+  open_meteo_forecast_minutes: 30
+  nws_alerts_minutes: 2
+  retry_seconds: 30           # backoff after a failed fetch
+
+features:
+  nws_alerts: true
+  show_uv_index: true
+  show_pressure: true
+  show_sunrise_sunset: true
+  enable_animations: true
+
+forecast:
+  hourly_hours: 24            # how many hours to expose to the frontend
+  daily_days: 7               # how many days to expose to the frontend
+
+wind:
+  # "from" points the arrow into the wind (at the side of the house being hit);
+  # "to" points the way the wind is traveling.
+  arrow_mode: "from"
+  # Optional aerial/satellite image of your property shown behind the compass.
+  # Leave blank to disable. Provide your own local file under frontend/
+  # (e.g. "icons/house.png") or a full URL (e.g. a Google/Mapbox static-maps
+  # image centered on your coordinates). Personal images are gitignored.
+  house_image: ""
+  # Rotate the image (degrees) so real-world north points up on the compass.
+  house_image_rotation_deg: 0

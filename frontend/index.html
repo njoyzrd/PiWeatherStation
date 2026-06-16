@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>WeatherPi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Severe weather alert banner (hidden unless alerts exist) -->
+  <div id="alert-banner" class="alert-banner hidden" role="alert"></div>
+
+  <main class="dashboard">
+    <!-- Header -->
+    <header class="panel header">
+      <div class="header-loc">
+        <div id="location" class="location">—</div>
+        <div id="condition-text" class="condition-text">—</div>
+      </div>
+      <div class="header-time">
+        <div id="clock" class="clock">--:--</div>
+        <div id="date" class="date">—</div>
+      </div>
+      <div class="header-status">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text" class="status-text">Connecting…</span>
+        <div id="updated" class="updated">—</div>
+      </div>
+    </header>
+
+    <!-- Current temperature -->
+    <section class="panel temp-panel">
+      <div class="temp-main">
+        <span id="temp" class="temp-value">--</span>
+        <span class="temp-unit">°</span>
+      </div>
+      <div class="temp-meta">
+        <div>Feels like <span id="feels-like">--</span>°</div>
+        <div id="hi-lo" class="hi-lo">H: --°&nbsp;&nbsp;L: --°</div>
+      </div>
+    </section>
+
+    <!-- Condition icon / summary -->
+    <section class="panel condition-panel">
+      <div id="condition-icon" class="condition-icon">—</div>
+      <div id="condition-summary" class="condition-summary">—</div>
+      <div class="condition-sub">
+        <span>☔ <span id="precip-chance">--</span>%</span>
+        <span>☁️ <span id="cloud-cover">--</span>%</span>
+      </div>
+    </section>
+
+    <!-- Wind compass -->
+    <section class="panel wind-panel">
+      <div class="wind-title">WIND</div>
+      <div class="compass" id="compass">
+        <img id="compass-bg" class="compass-bg hidden" alt="" />
+        <svg viewBox="0 0 200 200" class="compass-svg" aria-label="Wind compass">
+          <circle cx="100" cy="100" r="92" class="compass-ring" />
+          <g class="compass-ticks" id="compass-ticks"></g>
+          <text x="100" y="24" class="compass-label">N</text>
+          <text x="180" y="105" class="compass-label">E</text>
+          <text x="100" y="186" class="compass-label">S</text>
+          <text x="20" y="105" class="compass-label">W</text>
+          <g id="needle" class="needle">
+            <line x1="100" y1="150" x2="100" y2="62" class="arrow-shaft" />
+            <polygon points="100,30 86,66 114,66" class="arrow-head" />
+            <circle cx="100" cy="150" r="6" class="arrow-tail" />
+          </g>
+          <circle cx="100" cy="100" r="7" class="compass-hub" />
+        </svg>
+        <div class="compass-center">
+          <div id="wind-cardinal" class="wind-cardinal">--</div>
+        </div>
+      </div>
+      <div class="wind-readout">
+        <div class="wind-speed"><span id="wind-speed">--</span><span class="unit">mph</span></div>
+        <div class="wind-gust">Gust <span id="wind-gust">--</span> <span id="wind-gust-unit">mph</span></div>
+      </div>
+    </section>
+
+    <!-- Hourly forecast strip -->
+    <section class="panel hourly-panel">
+      <div class="panel-title">HOURLY</div>
+      <div id="hourly" class="hourly-strip"></div>
+    </section>
+
+    <!-- Metrics: humidity / dew point / pressure / UV -->
+    <section class="panel metrics-panel">
+      <div class="metric">
+        <div class="metric-label">HUMIDITY</div>
+        <div class="metric-value"><span id="humidity">--</span><span class="unit">%</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">DEW POINT</div>
+        <div class="metric-value"><span id="dew-point">--</span><span class="unit">°</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">PRESSURE</div>
+        <div class="metric-value"><span id="pressure">--</span><span class="unit" id="pressure-unit">inHg</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">UV INDEX</div>
+        <div class="metric-value"><span id="uv-index">--</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">SUNRISE</div>
+        <div class="metric-value sun"><span id="sunrise">--:--</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">SUNSET</div>
+        <div class="metric-value sun"><span id="sunset">--:--</span></div>
+      </div>
+    </section>
+
+    <!-- 7-day forecast -->
+    <section class="panel daily-panel">
+      <div class="panel-title">7-DAY FORECAST</div>
+      <div id="daily" class="daily-grid"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
