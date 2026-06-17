@@ -64,6 +64,20 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now weatherpi.service
 
+# Let this user restart the service without sudo, so scripts/update.sh never
+# needs sudo. Scoped to just weatherpi.service for this user; polkit reloads
+# rules automatically.
+echo "==> Installing polkit rule for password-less service restarts (sudo)..."
+sudo tee /etc/polkit-1/rules.d/49-weatherpi.rules >/dev/null <<EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        action.lookup("unit") == "weatherpi.service" &&
+        subject.user == "$USER_NAME") {
+        return polkit.Result.YES;
+    }
+});
+EOF
+
 # 5. Kiosk autostart via the labwc Wayland session ------------------------
 echo "==> Installing kiosk autostart (labwc Wayland session)..."
 chmod +x "$REPO_DIR/kiosk/chromium-kiosk.sh"

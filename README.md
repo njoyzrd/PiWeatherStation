@@ -204,6 +204,10 @@ house image are never touched, and the kiosk **reloads itself within ~60 s** —
 the dashboard watches `/api/version` and refreshes when the running revision
 changes, so you don't need to touch the Pi's screen.
 
+`update.sh` needs **no sudo**: `setup.sh` installs a polkit rule that lets the
+service user restart `weatherpi.service` without authentication (scoped to that
+one unit). If the rule isn't present, `update.sh` falls back to `sudo`.
+
 ## Next steps
 
 - Validate Pi 4 performance with the mock dashboard (see plan §16).

@@ -40,10 +40,14 @@ if ! git diff --quiet "$OLD" "$NEW" -- requirements.txt; then
   .venv/bin/pip install -r requirements.txt --quiet
 fi
 
-# Restart the backend if the service is installed.
+# Restart the backend if the service is installed. With the polkit rule that
+# setup.sh installs, this needs no sudo; otherwise fall back to sudo.
 if systemctl list-unit-files 2>/dev/null | grep -q '^weatherpi\.service'; then
-  echo "==> Restarting weatherpi service (sudo)..."
-  sudo systemctl restart weatherpi.service
+  echo "==> Restarting weatherpi service..."
+  if ! systemctl restart weatherpi.service 2>/dev/null; then
+    echo "    (no polkit permission yet — using sudo; run ./scripts/setup.sh to avoid this)"
+    sudo systemctl restart weatherpi.service
+  fi
 else
   echo "==> weatherpi.service not installed; skipping restart."
   echo "    (Run ./scripts/setup.sh to install it.)"
