@@ -80,7 +80,7 @@
   // wind — i.e. at the windward side being hit; "to" points the way it travels.
   function arrowBearing(deg) {
     if (deg === null || deg === undefined) return null;
-    const mode = (cfg.wind && cfg.wind.arrow_mode) || "from";
+    const mode = (cfg.wind && cfg.wind.arrow_mode) || "to";
     return mode === "to" ? (deg + 180) % 360 : deg;
   }
 

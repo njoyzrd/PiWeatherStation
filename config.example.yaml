@@ -40,7 +40,7 @@ forecast:
 wind:
   # "from" points the arrow into the wind (at the side of the house being hit);
   # "to" points the way the wind is traveling.
-  arrow_mode: "from"
+  arrow_mode: "to"
   # Optional aerial/satellite image of your property shown behind the compass.
   # Leave blank to disable. Provide your own local file under frontend/
   # (e.g. "icons/house.png") or a full URL (e.g. a Google/Mapbox static-maps
