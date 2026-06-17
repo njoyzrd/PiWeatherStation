@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import subprocess
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -26,6 +27,22 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger("weatherpi")
 
 FRONTEND_DIR = os.path.join(utils.PROJECT_ROOT, "frontend")
+
+
+def _app_version() -> str:
+    """Current git revision, computed once at startup. After an update + service
+    restart this changes, which the frontend uses to auto-reload the kiosk."""
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=utils.PROJECT_ROOT, stderr=subprocess.DEVNULL, timeout=5,
+        )
+        return out.decode().strip() or "unknown"
+    except Exception:  # noqa: BLE001 - not a git checkout / git missing
+        return "unknown"
+
+
+APP_VERSION = _app_version()
 
 
 @asynccontextmanager
@@ -113,6 +130,12 @@ async def get_config():
 @app.get("/healthz")
 async def healthz():
     return {"ok": True, "api_ok": _store().data.status.api_ok}
+
+
+@app.get("/api/version")
+async def get_version():
+    """Running code revision; the frontend reloads when this changes."""
+    return {"version": APP_VERSION}
 
 
 @app.websocket("/ws/live")

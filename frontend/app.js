@@ -418,6 +418,25 @@
     }
   }
 
+  // Auto-reload the kiosk after a deploy: the backend reports its git revision,
+  // which changes when the service restarts on a new version.
+  let appVersion = null;
+  async function checkVersion() {
+    try {
+      const r = await fetch("/api/version", { cache: "no-store" });
+      if (!r.ok) return;
+      const { version } = await r.json();
+      if (!version || version === "unknown") return;
+      if (appVersion && version !== appVersion) {
+        console.info("New version deployed, reloading:", appVersion, "->", version);
+        location.reload();
+      }
+      appVersion = version;
+    } catch (_) {
+      /* ignore — backend may be mid-restart */
+    }
+  }
+
   // --- Boot ----------------------------------------------------------------
   async function init() {
     buildCompassTicks();
@@ -436,6 +455,8 @@
     const everyMs = Math.max(5, (cfg.refresh && cfg.refresh.frontend_seconds) || 15) * 1000;
     setInterval(refresh, everyMs);
     connectLiveWind();
+    checkVersion();
+    setInterval(checkVersion, 60000);
   }
 
   if (document.readyState === "loading") {

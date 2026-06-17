@@ -146,6 +146,8 @@ frontend/
 systemd/weatherpi.service
 kiosk/chromium-kiosk.sh
 kiosk/autostart-example.desktop
+scripts/setup.sh           # one-time Pi installer (venv, deps, service, kiosk)
+scripts/update.sh          # pull latest from GitHub and restart
 ```
 
 ## API endpoints
@@ -162,35 +164,45 @@ kiosk/autostart-example.desktop
 | `GET /api/status`  | API health / freshness                          |
 | `GET /api/config`  | Frontend-relevant config slice                  |
 | `GET /healthz`     | Liveness probe (used by the kiosk launcher)     |
+| `GET /api/version` | Running code revision (drives kiosk auto-reload)|
 | `WS  /ws/live`     | Live wind feed (nearest NWS station or simulator) |
 
 ## Deploying on the Raspberry Pi
 
-1. Clone the repo to `/home/pi/PiWeatherStation` and create the venv as above.
-2. Create your local config (gitignored, so it isn't in the clone):
-   ```bash
-   cp config.example.yaml config.yaml      # then edit location/units/features
-   ```
-3. (Optional) Add your aerial house image for the wind compass — also gitignored,
-   so copy it over manually and point `wind.house_image` at it in `config.yaml`:
-   ```bash
-   cp /path/to/your-aerial.png frontend/icons/house.png
-   ```
-4. Install the backend service (edit paths/user inside the file first):
-   ```bash
-   sudo cp systemd/weatherpi.service /etc/systemd/system/
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now weatherpi.service
-   ```
-5. Autostart Chromium in kiosk mode:
-   ```bash
-   sudo apt install unclutter
-   mkdir -p ~/.config/autostart
-   cp kiosk/autostart-example.desktop ~/.config/autostart/weatherpi-kiosk.desktop
-   # edit the Exec path in that file if your install dir differs
-   ```
-6. Reboot. The Pi auto-logs in, the backend starts, and Chromium opens the
-   dashboard full-screen at <http://localhost:8000>.
+One-time setup — clone, then run the installer. It creates the virtualenv,
+installs dependencies, your `config.yaml`, the systemd service, and the kiosk
+autostart, adapting to whatever **user and path** you cloned into:
+
+```bash
+git clone https://github.com/njoyzrd/PiWeatherStation.git
+cd PiWeatherStation
+./scripts/setup.sh
+```
+
+Then personalize (both are gitignored, so they stay local and survive updates):
+
+```bash
+nano config.yaml                                       # your location/units
+cp /path/to/your-aerial.png frontend/icons/house.png   # optional compass image
+sudo systemctl restart weatherpi
+```
+
+Reboot. The Pi auto-logs in, the backend starts under systemd (`Restart=always`),
+and Chromium opens the dashboard full-screen at <http://localhost:8000>.
+
+## Updating
+
+Pull the latest version from GitHub and restart — any user on the Pi can run:
+
+```bash
+cd ~/PiWeatherStation && ./scripts/update.sh
+```
+
+It fast-forwards to the latest commit, reinstalls dependencies only if
+`requirements.txt` changed, and restarts the backend. Your `config.yaml` and
+house image are never touched, and the kiosk **reloads itself within ~60 s** —
+the dashboard watches `/api/version` and refreshes when the running revision
+changes, so you don't need to touch the Pi's screen.
 
 ## Next steps
 
