@@ -34,6 +34,7 @@ exec "$BROWSER" \
   --kiosk \
   --ozone-platform=wayland \
   --user-data-dir="$PROFILE" \
+  --password-store=basic \
   --noerrdialogs \
   --disable-infobars \
   --disable-translate \
