@@ -20,12 +20,17 @@
   // --- Clock ---------------------------------------------------------------
   function tickClock() {
     const now = new Date();
-    let h = now.getHours();
-    const m = String(now.getMinutes()).padStart(2, "0");
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    $("clock").textContent = `${h}:${m} ${ampm}`;
+    // Show the configured location's local time, not the Pi's system timezone
+    // (e.g. McFarland is Central even if the Pi's clock is set to Eastern).
+    const tz = (cfg.location && cfg.location.timezone) || undefined;
+    $("clock").textContent = now.toLocaleTimeString(undefined, {
+      timeZone: tz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
     $("date").textContent = now.toLocaleDateString(undefined, {
+      timeZone: tz,
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -196,7 +201,10 @@
   }
   function dayName(iso, idx) {
     if (idx === 0) return "Today";
-    return new Date(iso).toLocaleDateString(undefined, { weekday: "short" });
+    // iso is a calendar date "YYYY-MM-DD"; parse the parts as a local date so the
+    // weekday isn't shifted by UTC interpretation (which made tomorrow read as today).
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short" });
   }
 
   // --- Renderers -----------------------------------------------------------
@@ -286,6 +294,25 @@
       .join("");
   }
 
+  // Catmull-Rom spline -> cubic Bézier, for smooth chart curves.
+  function smoothPath(pts) {
+    if (pts.length < 2) return "";
+    const t = 0.18; // smoothing tension
+    let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i === 0 ? 0 : i - 1];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
+      const c1x = p1[0] + (p2[0] - p0[0]) * t;
+      const c1y = p1[1] + (p2[1] - p0[1]) * t;
+      const c2x = p2[0] - (p3[0] - p1[0]) * t;
+      const c2y = p2[1] - (p3[1] - p1[1]) * t;
+      d += ` C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d;
+  }
+
   // Dual-line temp + pressure trend graph over the next ~24h, drawn as SVG.
   function renderGraph(hourly) {
     const tEl = $("graph-temp-line");
@@ -305,11 +332,10 @@
     const pMin = Math.min(...press), pMax = Math.max(...press);
     const x = (i) => (i / (pts.length - 1)) * W;
     const scaleY = (v, lo, hi) => H - pad - ((v - lo) / ((hi - lo) || 1)) * (H - 2 * pad);
-    const path = (vals, lo, hi) =>
-      vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${scaleY(v, lo, hi).toFixed(1)}`).join(" ");
+    const toPts = (vals, lo, hi) => vals.map((v, i) => [x(i), scaleY(v, lo, hi)]);
 
-    tEl.setAttribute("d", path(temps, tMin, tMax));
-    pEl.setAttribute("d", path(press, pMin, pMax));
+    tEl.setAttribute("d", smoothPath(toPts(temps, tMin, tMax)));
+    pEl.setAttribute("d", smoothPath(toPts(press, pMin, pMax)));
     $("temp-hi").textContent = Math.round(tMax) + "°";
     $("temp-lo").textContent = Math.round(tMin) + "°";
     $("pres-hi").textContent = pMax.toFixed(2);
@@ -359,6 +385,17 @@
     });
   }
 
+  // NWS description text is hard-wrapped with newlines; collapse those within a
+  // paragraph to spaces while keeping blank-line paragraph breaks.
+  function cleanAlertText(s) {
+    if (!s) return "";
+    return s
+      .split(/\n\s*\n/)
+      .map((p) => p.replace(/\s*\n\s*/g, " ").trim())
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
   function renderAlerts(alerts) {
     const banner = $("alert-banner");
     if (!alerts || alerts.length === 0) {
@@ -370,8 +407,9 @@
     banner.className = "alert-banner";
     if (sev.includes("extreme") || sev.includes("severe")) banner.classList.add("severe");
     else if (sev.includes("moderate")) banner.classList.add("moderate");
-    const more = alerts.length > 1 ? `  (+${alerts.length - 1} more)` : "";
-    banner.textContent = `⚠ ${a.event || a.headline || "Weather Alert"}${more}`;
+    const more = alerts.length > 1 ? ` (+${alerts.length - 1} more)` : "";
+    $("alert-title").textContent = `⚠ ${a.event || a.headline || "Weather Alert"}${more}`;
+    $("alert-body").textContent = cleanAlertText(a.description || a.headline || "");
   }
 
   function renderStatus(status) {

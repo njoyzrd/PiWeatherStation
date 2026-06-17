@@ -18,7 +18,7 @@
   --bad: #f87171;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   --radius: 18px;
-  --gap: clamp(8px, 1.1vw, 16px);
+  --gap: clamp(8px, 1.1vw, 30px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,12 +35,19 @@ html, body {
   font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  /* Global scale: the whole rem-based design grows with the viewport so it
+     fills high-res displays (e.g. ~34px root at 3000px) and stays readable
+     from a distance, instead of capping out small. */
+  font-size: clamp(14px, 1.15vw, 36px);
 }
 
+body { display: flex; flex-direction: column; }
+
 .dashboard {
-  height: 100vh;
-  width: 100vw;
+  width: 100%;
   padding: var(--gap);
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   gap: var(--gap);
   grid-template-columns: repeat(3, 1fr);
@@ -59,7 +66,7 @@ html, body {
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow), inset 0 1px 0 var(--card-hi);
-  padding: clamp(10px, 1.4vw, 22px);
+  padding: clamp(10px, 1.4vw, 36px);
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(6px);
@@ -192,7 +199,7 @@ html, body {
   justify-content: center;
   margin: 0.2em 0;
 }
-.compass-svg { height: 100%; width: 100%; max-height: 320px; max-width: 320px; position: relative; z-index: 1; }
+.compass-svg { height: 100%; width: 100%; max-height: 600px; max-width: 600px; position: relative; z-index: 1; }
 .compass-ring { fill: rgba(10, 16, 32, 0.5); stroke: var(--card-border); stroke-width: 2; }
 .compass.has-bg .compass-ring { fill: rgba(10, 16, 32, 0.12); }
 .compass-label { fill: var(--text-faint); font-size: 15px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
@@ -214,7 +221,7 @@ html, body {
 .compass-bg {
   position: absolute;
   top: 50%; left: 50%;
-  height: min(100%, 320px);
+  height: min(100%, 600px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%) rotate(var(--house-rot, 0deg));
   border-radius: 50%;
@@ -359,18 +366,30 @@ html, body {
 
 /* --- Alert banner --------------------------------------------------------- */
 .alert-banner {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 50;
-  padding: 0.6em 1.2em;
-  font-weight: 700;
-  text-align: center;
-  background: linear-gradient(90deg, #7f1d1d, #b91c1c);
+  flex: 0 0 auto;            /* in normal flow: pushes the dashboard down */
+  max-height: 30vh;
+  overflow: hidden;
+  padding: clamp(8px, 0.9vw, 18px) clamp(12px, 1.4vw, 28px);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: linear-gradient(90deg, #7f1d1d, #b91c1c);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 50;
 }
-.alert-banner.severe { background: linear-gradient(90deg, #7f1d1d, #dc2626); animation: pulse 2s ease-in-out infinite; }
+.alert-banner.severe { background: linear-gradient(90deg, #7f1d1d, #dc2626); }
 .alert-banner.moderate { background: linear-gradient(90deg, #92400e, #d97706); }
+.alert-title {
+  font-weight: 800;
+  font-size: clamp(0.95rem, 1.35vw, 1.6rem);
+  letter-spacing: 0.01em;
+}
+.alert-body {
+  margin-top: 0.3em;
+  font-size: clamp(0.72rem, 0.95vw, 1.1rem);
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: pre-line;     /* keep NWS paragraph breaks */
+  opacity: 0.95;
+}
 .hidden { display: none !important; }
 
 /* Tighten for shorter (16:9) displays so nothing clips. */

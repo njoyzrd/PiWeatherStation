@@ -8,8 +8,12 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Severe weather alert banner (hidden unless alerts exist) -->
-  <div id="alert-banner" class="alert-banner hidden" role="alert"></div>
+  <!-- Severe weather alert banner (hidden unless alerts exist). In normal flow,
+       so it pushes the dashboard down rather than overlapping it. -->
+  <div id="alert-banner" class="alert-banner hidden" role="alert">
+    <div id="alert-title" class="alert-title"></div>
+    <div id="alert-body" class="alert-body"></div>
+  </div>
 
   <main class="dashboard">
     <!-- Header -->
