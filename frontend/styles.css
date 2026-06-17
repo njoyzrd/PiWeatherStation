@@ -76,7 +76,7 @@ body { display: flex; flex-direction: column; }
 }
 
 .panel-title, .wind-title {
-  font-size: clamp(0.6rem, 0.85vw, 0.8rem);
+  font-size: clamp(0.72rem, 1vw, 1.05rem);
   letter-spacing: 0.18em;
   color: var(--text-faint);
   font-weight: 600;
@@ -91,19 +91,25 @@ body { display: flex; flex-direction: column; }
   justify-content: space-between;
   padding-block: clamp(8px, 1vw, 16px);
 }
-.location { font-size: clamp(1.1rem, 2vw, 2rem); font-weight: 700; }
-.condition-text { font-size: clamp(0.8rem, 1.1vw, 1.1rem); color: var(--text-dim); margin-top: 0.15em; }
-.header-time { text-align: center; }
+.location { font-size: clamp(1.35rem, 2.5vw, 2.6rem); font-weight: 700; }
+.condition-text { font-size: clamp(1rem, 1.45vw, 1.5rem); color: var(--text-dim); margin-top: 0.15em; }
+.header-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.3vw, 28px);
+}
+.time-stack { text-align: center; }
 .clock {
-  font-size: clamp(1.8rem, 3.6vw, 3.6rem);
+  font-size: clamp(2.2rem, 4.4vw, 4.6rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-.date { font-size: clamp(0.75rem, 1vw, 1.05rem); color: var(--text-dim); margin-top: 0.25em; }
-.header-status { text-align: right; font-size: clamp(0.7rem, 0.95vw, 0.95rem); }
+.date { font-size: clamp(0.95rem, 1.3vw, 1.45rem); color: var(--text-dim); margin-top: 0.25em; }
+.header-status { text-align: right; font-size: clamp(0.85rem, 1.15vw, 1.25rem); }
 .status-dot {
   display: inline-block;
   width: 0.65em; height: 0.65em;
@@ -153,32 +159,32 @@ body { display: flex; flex-direction: column; }
   background-clip: text;
   color: transparent;
 }
-.temp-unit { font-size: clamp(1.3rem, 2.8vw, 3rem); color: var(--text-dim); font-weight: 600; margin-top: 0.2em; }
-.temp-meta { margin-top: 0.4em; font-size: clamp(0.8rem, 1.1vw, 1.2rem); color: var(--text-dim); }
+.temp-unit { font-size: clamp(1.5rem, 3.1vw, 3.4rem); color: var(--text-dim); font-weight: 600; margin-top: 0.2em; }
+.temp-meta { margin-top: 0.4em; font-size: clamp(1rem, 1.4vw, 1.55rem); color: var(--text-dim); }
 .hi-lo { margin-top: 0.25em; color: var(--text-faint); }
-.condition-icon { font-size: clamp(2.8rem, 6.5vw, 6.5rem); line-height: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
-.condition-summary { font-size: clamp(0.9rem, 1.5vw, 1.7rem); font-weight: 600; margin-top: 0.3em; }
-.condition-sub { display: flex; gap: 1em; margin-top: 0.5em; color: var(--text-dim); font-size: clamp(0.75rem, 1vw, 1.05rem); }
+.condition-icon { font-size: clamp(3.2rem, 7vw, 7.2rem); line-height: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+.condition-summary { font-size: clamp(1.1rem, 1.8vw, 2.1rem); font-weight: 600; margin-top: 0.3em; }
+.condition-sub { display: flex; gap: 1em; margin-top: 0.5em; color: var(--text-dim); font-size: clamp(0.95rem, 1.25vw, 1.4rem); }
 
 /* --- Temp + pressure graph card ------------------------------------------- */
 .graph-panel { grid-area: graph; display: flex; flex-direction: column; min-height: 0; }
 .graph-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6em; }
 .graph-head .panel-title { margin-bottom: 0; }
-.graph-legend { display: flex; gap: 0.9em; font-size: clamp(0.55rem, 0.8vw, 0.8rem); font-weight: 600; }
+.graph-legend { display: flex; gap: 0.9em; font-size: clamp(0.7rem, 0.95vw, 1.05rem); font-weight: 600; }
 .lg-temp { color: var(--accent-warm); }
 .lg-pres { color: var(--accent); }
 .lg-temp::before, .lg-pres::before { content: "▬ "; }
 .graph-body { flex: 1 1 0; min-height: 0; display: flex; align-items: stretch; gap: 0.35em; padding: 0.4em 0; }
 .graph-yl, .graph-yr {
   display: flex; flex-direction: column; justify-content: space-between;
-  font-size: clamp(0.55rem, 0.75vw, 0.95rem); font-variant-numeric: tabular-nums; padding: 1px 0;
+  font-size: clamp(0.68rem, 0.9vw, 1.1rem); font-variant-numeric: tabular-nums; padding: 1px 0;
 }
 .graph-yl { color: var(--accent-warm); text-align: right; }
 .graph-yr { color: var(--accent); text-align: left; }
 .trend-graph { flex: 1 1 0; min-width: 0; height: 100%; overflow: visible; }
 .g-temp { stroke: var(--accent-warm); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .g-pres { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.85; }
-.graph-xaxis { display: flex; justify-content: space-between; font-size: clamp(0.55rem, 0.75vw, 0.95rem); color: var(--text-faint); margin-top: 0.1em; }
+.graph-xaxis { display: flex; justify-content: space-between; font-size: clamp(0.68rem, 0.9vw, 1.1rem); color: var(--text-faint); margin-top: 0.1em; }
 
 /* --- Wind compass --------------------------------------------------------- */
 .wind-panel {
@@ -236,7 +242,7 @@ body { display: flex; flex-direction: column; }
   z-index: 2;
 }
 .wind-cardinal {
-  font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+  font-size: clamp(1.1rem, 1.8vw, 1.9rem);
   font-weight: 700;
   color: var(--text);
   transform: translateY(2.4em);
@@ -251,14 +257,14 @@ body { display: flex; flex-direction: column; }
   align-items: center;
   text-align: center;
 }
-.wind-speed { font-size: clamp(1.5rem, 2.6vw, 2.6rem); font-weight: 800; font-variant-numeric: tabular-nums; }
-.wind-speed .unit { font-size: 0.45em; color: var(--text-dim); margin-left: 0.25em; font-weight: 600; }
-.wind-gust { color: var(--text-dim); font-size: clamp(0.8rem, 1.05vw, 1.05rem); margin-top: 0.1em; }
+.wind-speed { font-size: clamp(3rem, 5.6vw, 6rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.wind-speed .unit { font-size: 0.34em; color: var(--text-dim); margin-left: 0.25em; font-weight: 600; }
+.wind-gust { color: var(--text-dim); font-size: clamp(1.05rem, 1.5vw, 1.7rem); margin-top: 0.3em; }
 .wind-gust.high { color: var(--accent-warm); animation: pulse 1.6s ease-in-out infinite; }
 .wind-source {
   display: flex; align-items: center; justify-content: center; gap: 0.4em;
-  margin-top: 0.3em; min-height: 1em;
-  font-size: clamp(0.6rem, 0.8vw, 0.85rem);
+  margin-top: 0.45em; min-height: 1em;
+  font-size: clamp(0.78rem, 1.05vw, 1.15rem);
   color: var(--text-faint); letter-spacing: 0.03em;
 }
 .wind-source .ld { width: 0.6em; height: 0.6em; border-radius: 50%; flex: none; }
@@ -287,10 +293,10 @@ body { display: flex; flex-direction: column; }
   border: 1px solid var(--card-border);
   border-radius: 12px;
 }
-.hour .h-time { font-size: clamp(0.65rem, 0.85vw, 0.9rem); color: var(--text-dim); }
-.hour .h-icon { font-size: clamp(1.1rem, 1.9vw, 1.9rem); }
-.hour .h-temp { font-size: clamp(0.85rem, 1.2vw, 1.25rem); font-weight: 700; }
-.hour .h-pop { font-size: clamp(0.6rem, 0.8vw, 0.85rem); color: var(--accent); }
+.hour .h-time { font-size: clamp(0.8rem, 1.05vw, 1.15rem); color: var(--text-dim); }
+.hour .h-icon { font-size: clamp(1.4rem, 2.3vw, 2.4rem); }
+.hour .h-temp { font-size: clamp(1.05rem, 1.45vw, 1.6rem); font-weight: 700; }
+.hour .h-pop { font-size: clamp(0.75rem, 1vw, 1.1rem); color: var(--accent); }
 .hour .h-pop.dry { color: var(--text-faint); }
 
 /* --- Metrics -------------------------------------------------------------- */
@@ -313,8 +319,8 @@ body { display: flex; flex-direction: column; }
   border: 1px solid var(--card-border);
   border-radius: 12px;
 }
-.metric-label { font-size: clamp(0.5rem, 0.7vw, 0.72rem); letter-spacing: 0.1em; color: var(--text-faint); }
-.metric-value { font-size: clamp(0.85rem, 1.3vw, 1.45rem); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 0.05em; line-height: 1.05; }
+.metric-label { font-size: clamp(0.62rem, 0.85vw, 0.95rem); letter-spacing: 0.1em; color: var(--text-faint); }
+.metric-value { font-size: clamp(1.1rem, 1.65vw, 1.95rem); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 0.05em; line-height: 1.05; }
 .metric-value .unit { font-size: 0.5em; color: var(--text-dim); margin-left: 0.2em; font-weight: 600; }
 .metric-value.sun { color: var(--accent-warm); }
 
@@ -333,14 +339,16 @@ body { display: flex; flex-direction: column; }
 .aqi-4 #aqi, .aqi-4 .aqi-cat { color: #c084fc; }
 .aqi-5 #aqi, .aqi-5 .aqi-cat { color: #fb7185; }
 
-/* Moon phase in the header */
-.moon { font-size: clamp(0.7rem, 0.95vw, 1rem); color: var(--text-dim); margin-top: 0.2em; }
+/* Moon phase in the header — a prominent icon to the left of the time/date. */
+.moon { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.moon-icon { font-size: clamp(1.8rem, 3vw, 3.2rem); line-height: 1; }
+.moon-name { font-size: clamp(0.62rem, 0.9vw, 1rem); color: var(--text-dim); margin-top: 0.15em; }
 
 /* Hourly header + precipitation nowcast */
 .hourly-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8em; margin-bottom: 0.4em; }
 .hourly-head .panel-title { margin-bottom: 0; }
 .nowcast { display: flex; align-items: center; gap: 0.5em; min-width: 0; }
-.nowcast-summary { font-size: clamp(0.6rem, 0.85vw, 0.9rem); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowcast-summary { font-size: clamp(0.75rem, 1vw, 1.1rem); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nowcast-summary.wet { color: var(--accent); }
 .nowcast-bar { display: inline-flex; align-items: flex-end; gap: 1px; height: 0.95em; }
 .nowcast-bar i { width: 3px; min-height: 1px; background: var(--accent); border-radius: 1px; opacity: 0.9; }
@@ -365,12 +373,12 @@ body { display: flex; flex-direction: column; }
   border-radius: 14px;
 }
 .day.today { border-color: rgba(91, 157, 255, 0.5); box-shadow: 0 0 0 1px rgba(91,157,255,0.25) inset; }
-.day .d-name { font-size: clamp(0.7rem, 1vw, 1.05rem); font-weight: 600; color: var(--text-dim); }
-.day .d-icon { font-size: clamp(1.4rem, 2.6vw, 2.6rem); }
-.day .d-temps { font-size: clamp(0.8rem, 1.2vw, 1.25rem); }
+.day .d-name { font-size: clamp(0.9rem, 1.3vw, 1.45rem); font-weight: 600; color: var(--text-dim); }
+.day .d-icon { font-size: clamp(1.7rem, 3vw, 3.1rem); }
+.day .d-temps { font-size: clamp(1rem, 1.45vw, 1.6rem); }
 .day .d-hi { font-weight: 700; }
 .day .d-lo { color: var(--text-faint); }
-.day .d-pop { font-size: clamp(0.6rem, 0.85vw, 0.9rem); color: var(--accent); }
+.day .d-pop { font-size: clamp(0.75rem, 1.05vw, 1.15rem); color: var(--accent); }
 
 /* --- Alert banner --------------------------------------------------------- */
 .alert-banner {

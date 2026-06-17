@@ -16,6 +16,7 @@
   let cfg = { refresh: { frontend_seconds: 15 }, units: {} };
   let lastSuccess = null; // Date of last good payload, for "updated X ago"
   let liveWind = null; // { obs, receivedAt } — latest live wind reading, if any
+  let lastForecastWind = null; // latest forecast current conditions, for gust fallback
 
   // --- Clock ---------------------------------------------------------------
   function tickClock() {
@@ -118,11 +119,14 @@
   // Render a wind reading from either the forecast (/api/all) or a live obs.
   function applyWind(w) {
     $("wind-speed").textContent = num(w.wind_speed_mph);
-    $("wind-gust").textContent = num(w.wind_gust_mph);
+    // Live observations (e.g. NWS stations) frequently omit gusts; fall back to
+    // the latest forecast gust so the field isn't blank when live wind is on.
+    const gust = w.wind_gust_mph ?? (lastForecastWind && lastForecastWind.wind_gust_mph);
+    $("wind-gust").textContent = num(gust);
     $("wind-cardinal").textContent = w.wind_direction_cardinal || "--";
     setNeedle(arrowBearing(w.wind_direction_deg));
     const gustEl = document.querySelector(".wind-gust");
-    const gusty = w.wind_gust_mph && w.wind_speed_mph && w.wind_gust_mph - w.wind_speed_mph >= 8;
+    const gusty = gust && w.wind_speed_mph && gust - w.wind_speed_mph >= 8;
     gustEl.classList.toggle("high", !!gusty);
   }
 
@@ -234,6 +238,7 @@
     }
 
     // Wind — a fresh live source is authoritative; otherwise use the forecast.
+    lastForecastWind = c; // remember for gust fallback when live wind lacks gusts
     if (!isLiveWindFresh()) {
       applyWind(c);
       setWindSource(null);
@@ -260,7 +265,11 @@
   }
 
   function renderMoon(c) {
-    $("moon").textContent = c.moon_icon ? `${c.moon_icon} ${c.moon_phase_name || ""}`.trim() : "";
+    const el = $("moon");
+    if (!c.moon_icon) { el.innerHTML = ""; return; }
+    el.innerHTML =
+      `<span class="moon-icon">${c.moon_icon}</span>` +
+      (c.moon_phase_name ? `<span class="moon-name">${c.moon_phase_name}</span>` : "");
   }
 
   function renderAirQuality(aq) {
