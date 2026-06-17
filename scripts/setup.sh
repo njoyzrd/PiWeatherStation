@@ -21,9 +21,10 @@ echo "    user: $USER_NAME"
 # 1. System packages -------------------------------------------------------
 echo "==> Installing system packages (sudo)..."
 sudo apt-get update -qq
-sudo apt-get install -y python3-venv python3-pip unclutter curl
-# Chromium package name varies across Pi OS releases.
-sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium || \
+# fonts-noto-color-emoji is required or the weather emoji render as empty boxes.
+sudo apt-get install -y python3-venv python3-pip fonts-noto-color-emoji
+# Chromium package name varies across Pi OS releases (chromium on Bookworm/Trixie).
+sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser || \
   echo "WARN: could not install chromium automatically — install it manually."
 
 # 2. Python virtualenv + dependencies --------------------------------------
@@ -63,18 +64,15 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now weatherpi.service
 
-# 5. Kiosk autostart (Chromium full-screen at login) -----------------------
-echo "==> Installing kiosk autostart..."
+# 5. Kiosk autostart via the labwc Wayland session ------------------------
+echo "==> Installing kiosk autostart (labwc Wayland session)..."
 chmod +x "$REPO_DIR/kiosk/chromium-kiosk.sh"
-mkdir -p "$HOME/.config/autostart"
-cat > "$HOME/.config/autostart/weatherpi-kiosk.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=WeatherPi Kiosk
-Comment=Launch the WeatherPi dashboard full-screen at login
-Exec=$REPO_DIR/kiosk/chromium-kiosk.sh
-X-GNOME-Autostart-enabled=true
-EOF
+LABWC_AUTOSTART="$HOME/.config/labwc/autostart"
+mkdir -p "$(dirname "$LABWC_AUTOSTART")"
+if ! grep -qsF "chromium-kiosk.sh" "$LABWC_AUTOSTART"; then
+  echo "$REPO_DIR/kiosk/chromium-kiosk.sh &" >> "$LABWC_AUTOSTART"
+fi
+chmod +x "$LABWC_AUTOSTART" 2>/dev/null || true
 
 echo
 echo "==> Done."
