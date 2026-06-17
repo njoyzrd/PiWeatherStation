@@ -322,29 +322,60 @@
     return d;
   }
 
-  // Dual-line temp + pressure trend graph over the next ~24h, drawn as SVG.
+  // Temp line + pressure bars over the next ~24h on one chart, drawn as SVG.
   function renderGraph(hourly) {
     const tEl = $("graph-temp-line");
-    const pEl = $("graph-pres-line");
+    const gridEl = $("graph-grid");
+    const barsEl = $("graph-pres-bars");
     const pts = (hourly || [])
       .slice(0, 24)
       .filter((h) => h.temperature_f != null && h.pressure_inhg != null);
     if (pts.length < 2) {
       tEl.removeAttribute("d");
-      pEl.removeAttribute("d");
+      gridEl.innerHTML = "";
+      barsEl.innerHTML = "";
       return;
     }
     const W = 1000, H = 300, pad = 22;
+    const n = pts.length;
+    const innerH = H - 2 * pad;
     const temps = pts.map((p) => p.temperature_f);
     const press = pts.map((p) => p.pressure_inhg);
     const tMin = Math.min(...temps), tMax = Math.max(...temps);
     const pMin = Math.min(...press), pMax = Math.max(...press);
-    const x = (i) => (i / (pts.length - 1)) * W;
-    const scaleY = (v, lo, hi) => H - pad - ((v - lo) / ((hi - lo) || 1)) * (H - 2 * pad);
+    // Bars and the line share slot-centered x positions so they line up.
+    const x = (i) => ((i + 0.5) / n) * W;
+    const scaleY = (v, lo, hi) => H - pad - ((v - lo) / ((hi - lo) || 1)) * innerH;
     const toPts = (vals, lo, hi) => vals.map((v, i) => [x(i), scaleY(v, lo, hi)]);
 
+    // Background grid: horizontal rows + a few vertical columns.
+    const ROWS = 4, VCOLS = 6, lines = [];
+    for (let r = 0; r <= ROWS; r++) {
+      const y = (pad + (innerH * r) / ROWS).toFixed(1);
+      lines.push(`<line x1="0" y1="${y}" x2="${W}" y2="${y}" />`);
+    }
+    for (let c = 0; c <= VCOLS; c++) {
+      const gx = ((c / VCOLS) * W).toFixed(1);
+      lines.push(`<line class="v" x1="${gx}" y1="${pad}" x2="${gx}" y2="${H - pad}" />`);
+    }
+    gridEl.innerHTML = lines.join("");
+
+    // Pressure as bars. Pressure swings in a narrow band, so map it into a
+    // 18%..90% height window rather than zeroing out the lowest reading.
+    const pSpan = (pMax - pMin) || 1;
+    const slot = W / n;
+    const bw = slot * 0.6;
+    barsEl.innerHTML = press
+      .map((v, i) => {
+        const h = (0.18 + 0.72 * ((v - pMin) / pSpan)) * innerH;
+        const y = (H - pad - h).toFixed(1);
+        const bx = (x(i) - bw / 2).toFixed(1);
+        return `<rect x="${bx}" y="${y}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" />`;
+      })
+      .join("");
+
+    // Temperature line on top.
     tEl.setAttribute("d", smoothPath(toPts(temps, tMin, tMax)));
-    pEl.setAttribute("d", smoothPath(toPts(press, pMin, pMax)));
     $("temp-hi").textContent = Math.round(tMax) + "°";
     $("temp-lo").textContent = Math.round(tMin) + "°";
     $("pres-hi").textContent = pMax.toFixed(2);

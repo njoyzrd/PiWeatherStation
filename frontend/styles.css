@@ -91,14 +91,10 @@ body { display: flex; flex-direction: column; }
   justify-content: space-between;
   padding-block: clamp(8px, 1vw, 16px);
 }
+.header-loc { display: flex; align-items: center; gap: clamp(12px, 1.6vw, 32px); }
 .location { font-size: clamp(1.35rem, 2.5vw, 2.6rem); font-weight: 700; }
 .condition-text { font-size: clamp(1rem, 1.45vw, 1.5rem); color: var(--text-dim); margin-top: 0.15em; }
-.header-time {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(10px, 1.3vw, 28px);
-}
+.header-time { text-align: center; }
 .time-stack { text-align: center; }
 .clock {
   font-size: clamp(2.2rem, 4.4vw, 4.6rem);
@@ -173,7 +169,8 @@ body { display: flex; flex-direction: column; }
 .graph-legend { display: flex; gap: 0.9em; font-size: clamp(0.7rem, 0.95vw, 1.05rem); font-weight: 600; }
 .lg-temp { color: var(--accent-warm); }
 .lg-pres { color: var(--accent); }
-.lg-temp::before, .lg-pres::before { content: "▬ "; }
+.lg-temp::before { content: "▬ "; }
+.lg-pres::before { content: "▮ "; }
 .graph-body { flex: 1 1 0; min-height: 0; display: flex; align-items: stretch; gap: 0.35em; padding: 0.4em 0; }
 .graph-yl, .graph-yr {
   display: flex; flex-direction: column; justify-content: space-between;
@@ -183,7 +180,9 @@ body { display: flex; flex-direction: column; }
 .graph-yr { color: var(--accent); text-align: left; }
 .trend-graph { flex: 1 1 0; min-width: 0; height: 100%; overflow: visible; }
 .g-temp { stroke: var(--accent-warm); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-.g-pres { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.85; }
+.g-grid line { stroke: rgba(120, 160, 255, 0.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.g-grid line.v { stroke: rgba(120, 160, 255, 0.08); }
+.g-pres-bars rect { fill: var(--accent); opacity: 0.34; }
 .graph-xaxis { display: flex; justify-content: space-between; font-size: clamp(0.68rem, 0.9vw, 1.1rem); color: var(--text-faint); margin-top: 0.1em; }
 
 /* --- Wind compass --------------------------------------------------------- */

@@ -19,11 +19,13 @@
     <!-- Header -->
     <header class="panel header">
       <div class="header-loc">
-        <div id="location" class="location">—</div>
-        <div id="condition-text" class="condition-text">—</div>
+        <div class="loc-text">
+          <div id="location" class="location">—</div>
+          <div id="condition-text" class="condition-text">—</div>
+        </div>
+        <div id="moon" class="moon"></div>
       </div>
       <div class="header-time">
-        <div id="moon" class="moon"></div>
         <div class="time-stack">
           <div id="clock" class="clock">--:--</div>
           <div id="date" class="date">—</div>
@@ -70,7 +72,8 @@
       <div class="graph-body">
         <div class="graph-yl"><span id="temp-hi"></span><span id="temp-lo"></span></div>
         <svg class="trend-graph" viewBox="0 0 1000 300" preserveAspectRatio="none">
-          <path id="graph-pres-line" class="g-pres" fill="none" vector-effect="non-scaling-stroke" />
+          <g id="graph-grid" class="g-grid"></g>
+          <g id="graph-pres-bars" class="g-pres-bars"></g>
           <path id="graph-temp-line" class="g-temp" fill="none" vector-effect="non-scaling-stroke" />
         </svg>
         <div class="graph-yr"><span id="pres-hi"></span><span id="pres-lo"></span></div>
