@@ -42,7 +42,7 @@ fi
 
 # Restart the backend if the service is installed. With the polkit rule that
 # setup.sh installs, this needs no sudo; otherwise fall back to sudo.
-if systemctl list-unit-files 2>/dev/null | grep -q '^weatherpi\.service'; then
+if systemctl cat weatherpi.service >/dev/null 2>&1; then
   echo "==> Restarting weatherpi service..."
   if ! systemctl restart weatherpi.service 2>/dev/null; then
     echo "    (no polkit permission yet — using sudo; run ./scripts/setup.sh to avoid this)"
