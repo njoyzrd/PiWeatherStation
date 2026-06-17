@@ -123,6 +123,7 @@ def _normalize_hourly(ts: List[dict], limit: int) -> List[HourlyPoint]:
                 precip_probability_pct=_prob(entry),
                 condition_icon=icon,
                 wind_speed_mph=utils.ms_to_mph(det.get("wind_speed")),
+                pressure_inhg=utils.hpa_to_inhg(det.get("air_pressure_at_sea_level")),
                 is_day=is_day,
             )
         )

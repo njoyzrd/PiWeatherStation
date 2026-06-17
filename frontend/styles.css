@@ -47,10 +47,10 @@ html, body {
   /* minmax(0, …) lets every row shrink to its track instead of overflowing. */
   grid-template-rows: auto minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.1fr);
   grid-template-areas:
-    "header   header    header"
-    "temp     condition wind"
-    "hourly   hourly    metrics"
-    "daily    daily     daily";
+    "header   header  header"
+    "tempcond graph   wind"
+    "hourly   hourly  metrics"
+    "daily    daily   daily";
 }
 
 /* --- Glass panels --------------------------------------------------------- */
@@ -110,16 +110,34 @@ html, body {
 .status-text { color: var(--text-dim); }
 .updated { color: var(--text-faint); font-size: 0.85em; margin-top: 0.2em; }
 
-/* --- Current temperature -------------------------------------------------- */
-.temp-panel {
-  grid-area: temp;
+/* --- Combined temperature + conditions card ------------------------------- */
+.tempcond-panel {
+  grid-area: tempcond;
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 24px);
+}
+.tc-left {
+  flex: 1.15 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+.tc-right {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-left: clamp(6px, 1vw, 18px);
+  border-left: 1px solid var(--card-border);
+}
 .temp-main { display: flex; align-items: flex-start; line-height: 0.9; }
 .temp-value {
-  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-size: clamp(3rem, 8vw, 8.5rem);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   background: linear-gradient(180deg, #ffffff, #b9cdff);
@@ -127,22 +145,32 @@ html, body {
   background-clip: text;
   color: transparent;
 }
-.temp-unit { font-size: clamp(1.5rem, 3vw, 3rem); color: var(--text-dim); font-weight: 600; margin-top: 0.2em; }
-.temp-meta { margin-top: 0.4em; font-size: clamp(0.85rem, 1.2vw, 1.25rem); color: var(--text-dim); }
+.temp-unit { font-size: clamp(1.3rem, 2.8vw, 3rem); color: var(--text-dim); font-weight: 600; margin-top: 0.2em; }
+.temp-meta { margin-top: 0.4em; font-size: clamp(0.8rem, 1.1vw, 1.2rem); color: var(--text-dim); }
 .hi-lo { margin-top: 0.25em; color: var(--text-faint); }
+.condition-icon { font-size: clamp(2.8rem, 6.5vw, 6.5rem); line-height: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+.condition-summary { font-size: clamp(0.9rem, 1.5vw, 1.7rem); font-weight: 600; margin-top: 0.3em; }
+.condition-sub { display: flex; gap: 1em; margin-top: 0.5em; color: var(--text-dim); font-size: clamp(0.75rem, 1vw, 1.05rem); }
 
-/* --- Condition ------------------------------------------------------------ */
-.condition-panel {
-  grid-area: condition;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+/* --- Temp + pressure graph card ------------------------------------------- */
+.graph-panel { grid-area: graph; display: flex; flex-direction: column; min-height: 0; }
+.graph-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6em; }
+.graph-head .panel-title { margin-bottom: 0; }
+.graph-legend { display: flex; gap: 0.9em; font-size: clamp(0.55rem, 0.8vw, 0.8rem); font-weight: 600; }
+.lg-temp { color: var(--accent-warm); }
+.lg-pres { color: var(--accent); }
+.lg-temp::before, .lg-pres::before { content: "▬ "; }
+.graph-body { flex: 1 1 0; min-height: 0; display: flex; align-items: stretch; gap: 0.35em; padding: 0.4em 0; }
+.graph-yl, .graph-yr {
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: clamp(0.55rem, 0.75vw, 0.95rem); font-variant-numeric: tabular-nums; padding: 1px 0;
 }
-.condition-icon { font-size: clamp(3.5rem, 8vw, 7rem); line-height: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
-.condition-summary { font-size: clamp(1rem, 1.6vw, 1.7rem); font-weight: 600; margin-top: 0.3em; }
-.condition-sub { display: flex; gap: 1.2em; margin-top: 0.6em; color: var(--text-dim); font-size: clamp(0.8rem, 1.1vw, 1.1rem); }
+.graph-yl { color: var(--accent-warm); text-align: right; }
+.graph-yr { color: var(--accent); text-align: left; }
+.trend-graph { flex: 1 1 0; min-width: 0; height: 100%; overflow: visible; }
+.g-temp { stroke: var(--accent-warm); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.g-pres { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.85; }
+.graph-xaxis { display: flex; justify-content: space-between; font-size: clamp(0.55rem, 0.75vw, 0.95rem); color: var(--text-faint); margin-top: 0.1em; }
 
 /* --- Wind compass --------------------------------------------------------- */
 .wind-panel {
@@ -164,7 +192,7 @@ html, body {
   justify-content: center;
   margin: 0.2em 0;
 }
-.compass-svg { height: 100%; width: 100%; max-height: 240px; max-width: 240px; position: relative; z-index: 1; }
+.compass-svg { height: 100%; width: 100%; max-height: 320px; max-width: 320px; position: relative; z-index: 1; }
 .compass-ring { fill: rgba(10, 16, 32, 0.5); stroke: var(--card-border); stroke-width: 2; }
 .compass.has-bg .compass-ring { fill: rgba(10, 16, 32, 0.12); }
 .compass-label { fill: var(--text-faint); font-size: 15px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
@@ -186,7 +214,7 @@ html, body {
 .compass-bg {
   position: absolute;
   top: 50%; left: 50%;
-  height: min(100%, 240px);
+  height: min(100%, 320px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%) rotate(var(--house-rot, 0deg));
   border-radius: 50%;

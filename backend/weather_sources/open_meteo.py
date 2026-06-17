@@ -182,6 +182,7 @@ def _normalize_hourly(data: dict, limit: int) -> List[HourlyPoint]:
                 condition_code=code,
                 condition_icon=utils.wmo_icon(code, is_day),
                 wind_speed_mph=_at(h.get("wind_speed_10m"), i),
+                pressure_inhg=utils.hpa_to_inhg(_at(h.get("pressure_msl"), i)),
                 is_day=is_day,
             )
         )

@@ -55,6 +55,7 @@ class HourlyPoint(BaseModel):
     condition_code: Optional[int] = None
     condition_icon: Optional[str] = None
     wind_speed_mph: Optional[float] = None
+    pressure_inhg: Optional[float] = None
     is_day: Optional[bool] = None
 
 

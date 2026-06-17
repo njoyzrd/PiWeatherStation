@@ -30,26 +30,46 @@
       </div>
     </header>
 
-    <!-- Current temperature -->
-    <section class="panel temp-panel">
-      <div class="temp-main">
-        <span id="temp" class="temp-value">--</span>
-        <span class="temp-unit">°</span>
+    <!-- Current temperature + conditions (combined) -->
+    <section class="panel tempcond-panel">
+      <div class="tc-left">
+        <div class="temp-main">
+          <span id="temp" class="temp-value">--</span>
+          <span class="temp-unit">°</span>
+        </div>
+        <div class="temp-meta">
+          <div>Feels like <span id="feels-like">--</span>°</div>
+          <div id="hi-lo" class="hi-lo">H: --°&nbsp;&nbsp;L: --°</div>
+        </div>
       </div>
-      <div class="temp-meta">
-        <div>Feels like <span id="feels-like">--</span>°</div>
-        <div id="hi-lo" class="hi-lo">H: --°&nbsp;&nbsp;L: --°</div>
+      <div class="tc-right">
+        <div id="condition-icon" class="condition-icon">—</div>
+        <div id="condition-summary" class="condition-summary">—</div>
+        <div class="condition-sub">
+          <span>☔ <span id="precip-chance">--</span>%</span>
+          <span>☁️ <span id="cloud-cover">--</span>%</span>
+        </div>
       </div>
     </section>
 
-    <!-- Condition icon / summary -->
-    <section class="panel condition-panel">
-      <div id="condition-icon" class="condition-icon">—</div>
-      <div id="condition-summary" class="condition-summary">—</div>
-      <div class="condition-sub">
-        <span>☔ <span id="precip-chance">--</span>%</span>
-        <span>☁️ <span id="cloud-cover">--</span>%</span>
+    <!-- Temperature + atmospheric pressure trend graph -->
+    <section class="panel graph-panel">
+      <div class="graph-head">
+        <div class="panel-title">TEMP &amp; PRESSURE · 24H</div>
+        <div class="graph-legend">
+          <span class="lg-temp">Temp</span>
+          <span class="lg-pres">Pressure</span>
+        </div>
       </div>
+      <div class="graph-body">
+        <div class="graph-yl"><span id="temp-hi"></span><span id="temp-lo"></span></div>
+        <svg class="trend-graph" viewBox="0 0 1000 300" preserveAspectRatio="none">
+          <path id="graph-pres-line" class="g-pres" fill="none" vector-effect="non-scaling-stroke" />
+          <path id="graph-temp-line" class="g-temp" fill="none" vector-effect="non-scaling-stroke" />
+        </svg>
+        <div class="graph-yr"><span id="pres-hi"></span><span id="pres-lo"></span></div>
+      </div>
+      <div class="graph-xaxis"><span id="gx0"></span><span id="gx1"></span><span id="gx2"></span></div>
     </section>
 
     <!-- Wind compass -->

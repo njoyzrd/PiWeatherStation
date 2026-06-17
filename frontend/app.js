@@ -286,6 +286,39 @@
       .join("");
   }
 
+  // Dual-line temp + pressure trend graph over the next ~24h, drawn as SVG.
+  function renderGraph(hourly) {
+    const tEl = $("graph-temp-line");
+    const pEl = $("graph-pres-line");
+    const pts = (hourly || [])
+      .slice(0, 24)
+      .filter((h) => h.temperature_f != null && h.pressure_inhg != null);
+    if (pts.length < 2) {
+      tEl.removeAttribute("d");
+      pEl.removeAttribute("d");
+      return;
+    }
+    const W = 1000, H = 300, pad = 22;
+    const temps = pts.map((p) => p.temperature_f);
+    const press = pts.map((p) => p.pressure_inhg);
+    const tMin = Math.min(...temps), tMax = Math.max(...temps);
+    const pMin = Math.min(...press), pMax = Math.max(...press);
+    const x = (i) => (i / (pts.length - 1)) * W;
+    const scaleY = (v, lo, hi) => H - pad - ((v - lo) / ((hi - lo) || 1)) * (H - 2 * pad);
+    const path = (vals, lo, hi) =>
+      vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${scaleY(v, lo, hi).toFixed(1)}`).join(" ");
+
+    tEl.setAttribute("d", path(temps, tMin, tMax));
+    pEl.setAttribute("d", path(press, pMin, pMax));
+    $("temp-hi").textContent = Math.round(tMax) + "°";
+    $("temp-lo").textContent = Math.round(tMin) + "°";
+    $("pres-hi").textContent = pMax.toFixed(2);
+    $("pres-lo").textContent = pMin.toFixed(2);
+    $("gx0").textContent = fmtHour(pts[0].time);
+    $("gx1").textContent = fmtHour(pts[Math.floor((pts.length - 1) / 2)].time);
+    $("gx2").textContent = fmtHour(pts[pts.length - 1].time);
+  }
+
   function renderHourly(hourly) {
     const el = $("hourly");
     el.innerHTML = "";
@@ -368,6 +401,7 @@
       if (data.location) $("location").textContent = data.location.name;
       renderCurrent(data.current, data.daily);
       renderHourly(data.hourly);
+      renderGraph(data.hourly);
       renderDaily(data.daily);
       renderAlerts(data.alerts);
       renderAirQuality(data.air_quality);

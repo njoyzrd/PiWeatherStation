@@ -14,8 +14,9 @@ Working vertical slice — live data end to end:
 - ✅ FastAPI backend with a background poller and warm in-memory cache
 - ✅ Live [Open-Meteo](https://open-meteo.com/) current + hourly + daily data (no API key)
 - ✅ Normalized data model served at `/api/all` (and per-section endpoints)
-- ✅ Dashboard: current conditions, animated wind compass, hourly strip, 7-day
-  forecast, humidity / dew point / pressure / UV, sunrise / sunset, live clock
+- ✅ Dashboard (optimized for 3:2 / 3000×2000): combined temperature + conditions
+  card, a 24-hour temperature & pressure trend graph, animated wind compass,
+  hourly strip, 7-day forecast, metrics grid, and a live clock
 - ✅ Stale-data handling — keeps last good data and flags it when a fetch fails
 - ✅ NWS severe-weather alerts (U.S.) — fetched, normalized, and shown as a
   severity-colored banner
