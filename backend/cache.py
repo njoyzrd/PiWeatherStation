@@ -16,7 +16,7 @@ import httpx
 
 from backend import utils
 from backend.models import Location, Status, WeatherData
-from backend.weather_sources import nws, open_meteo
+from backend.weather_sources import metno, nws, open_meteo, open_meteo_air
 
 log = logging.getLogger("weatherpi.cache")
 
@@ -89,24 +89,43 @@ class WeatherStore:
     # --- refreshers --------------------------------------------------------
 
     async def _refresh_weather(self) -> None:
+        nowcast = None
+        source = None
         try:
-            location, current, hourly, daily = await open_meteo.fetch(self.cfg, self._client)
-            self._data.location = location
-            self._data.current = current
-            self._data.hourly = hourly
-            self._data.daily = daily
-            self._data.status = Status(
-                api_ok=True,
-                stale=False,
-                last_successful_refresh=_now_iso(),
-                last_error=None,
-            )
-            log.info("Weather refreshed: %s°F, %s", current.temperature_f, current.condition_text)
-        except Exception as exc:  # noqa: BLE001 - keep serving stale data on any failure
-            self._data.status.api_ok = False
-            self._data.status.stale = True
-            self._data.status.last_error = f"{type(exc).__name__}: {exc}"
-            log.warning("Weather refresh failed: %s", exc)
+            location, current, hourly, daily, nowcast = await open_meteo.fetch(self.cfg, self._client)
+            source = "open-meteo"
+        except Exception as exc:  # noqa: BLE001 - Open-Meteo down: try the fallback
+            log.warning("Open-Meteo refresh failed: %s; trying Met.no fallback", exc)
+            try:
+                location, current, hourly, daily = await metno.fetch(self.cfg, self._client)
+                source = "met.no"
+            except Exception as exc2:  # noqa: BLE001 - both down: keep stale data
+                self._data.status.api_ok = False
+                self._data.status.stale = True
+                self._data.status.last_error = f"{type(exc).__name__}: {exc}"
+                log.warning("Met.no fallback also failed: %s", exc2)
+                return
+
+        self._data.location = location
+        self._data.current = current
+        self._data.hourly = hourly
+        self._data.daily = daily
+        self._data.nowcast = nowcast
+        self._data.status = Status(
+            api_ok=True,
+            stale=False,
+            source=source,
+            last_successful_refresh=_now_iso(),
+            last_error=None,
+        )
+        log.info("Weather refreshed via %s: %s°F, %s", source, current.temperature_f, current.condition_text)
+        await self._refresh_air_quality()
+
+    async def _refresh_air_quality(self) -> None:
+        try:
+            self._data.air_quality = await open_meteo_air.fetch(self.cfg, self._client)
+        except Exception as exc:  # noqa: BLE001 - non-critical
+            log.warning("Air quality refresh failed: %s", exc)
 
     async def _refresh_alerts(self) -> None:
         try:

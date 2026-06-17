@@ -49,6 +49,58 @@ def c_to_f(c: Optional[float]) -> Optional[float]:
     return c * 9.0 / 5.0 + 32.0
 
 
+def ft_to_mi(ft: Optional[float]) -> Optional[float]:
+    if ft is None:
+        return None
+    return round(ft / 5280.0, 1)
+
+
+def ms_to_mph(ms: Optional[float]) -> Optional[float]:
+    if ms is None:
+        return None
+    return round(ms * 2.2369362921, 1)
+
+
+# US EPA AQI bands: (upper_bound, level, category).
+_AQI_BANDS = [
+    (50, 0, "Good"),
+    (100, 1, "Moderate"),
+    (150, 2, "Unhealthy (sensitive)"),
+    (200, 3, "Unhealthy"),
+    (300, 4, "Very unhealthy"),
+    (10_000, 5, "Hazardous"),
+]
+
+
+def aqi_category(us_aqi: Optional[float]):
+    """Return (level 0-5, category text) for a US AQI value, or (None, None)."""
+    if us_aqi is None:
+        return None, None
+    for upper, level, name in _AQI_BANDS:
+        if us_aqi <= upper:
+            return level, name
+    return 5, "Hazardous"
+
+
+def moon_phase(now=None):
+    """Return (fraction 0..1 through the synodic month, name, emoji)."""
+    from datetime import datetime, timezone
+
+    if now is None:
+        now = datetime.now(timezone.utc)
+    jd = now.timestamp() / 86400.0 + 2440587.5  # Unix time -> Julian date
+    synodic = 29.530588853
+    known_new_moon = 2451550.1  # 2000-01-06 18:14 UTC
+    frac = ((jd - known_new_moon) % synodic) / synodic
+    names = [
+        "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+        "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent",
+    ]
+    icons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+    idx = int(frac * 8 + 0.5) % 8
+    return round(frac, 3), names[idx], icons[idx]
+
+
 def dew_point_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Optional[float]:
     """Magnus-formula dew point. Open-Meteo's `current` block omits dew point, so we derive it."""
     if temp_f is None or humidity_pct is None or humidity_pct <= 0:

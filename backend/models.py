@@ -35,6 +35,12 @@ class Current(BaseModel):
     is_day: Optional[bool] = None
     uv_index: Optional[float] = None
     precip_rate_in: Optional[float] = None
+    visibility_mi: Optional[float] = None
+    pressure_trend: Optional[str] = None        # "rising" | "falling" | "steady"
+    pressure_change_inhg: Optional[float] = None  # change over the last ~3 hours
+    moon_phase: Optional[float] = None          # 0..1 fraction through the synodic month
+    moon_phase_name: Optional[str] = None
+    moon_icon: Optional[str] = None
     sunrise: Optional[str] = None
     sunset: Optional[str] = None
     updated_at: Optional[str] = None
@@ -60,6 +66,7 @@ class DailyPoint(BaseModel):
     condition_text: Optional[str] = None
     condition_icon: Optional[str] = None
     precip_probability_pct: Optional[float] = None
+    snowfall_in: Optional[float] = None
     uv_index_max: Optional[float] = None
     sunrise: Optional[str] = None
     sunset: Optional[str] = None
@@ -74,6 +81,30 @@ class Alert(BaseModel):
     onset: Optional[str] = None
     expires: Optional[str] = None
     source: str = "nws"
+
+
+class AirQuality(BaseModel):
+    us_aqi: Optional[int] = None
+    category: Optional[str] = None          # "Good", "Moderate", ...
+    level: Optional[int] = None             # 0..5, drives the color band
+    pm2_5: Optional[float] = None
+    pm10: Optional[float] = None
+    ozone: Optional[float] = None
+    nitrogen_dioxide: Optional[float] = None
+    updated_at: Optional[str] = None
+    source: str = "open-meteo"
+
+
+class NowcastPoint(BaseModel):
+    minute_offset: int                      # minutes from now
+    precip_in: Optional[float] = None
+
+
+class Nowcast(BaseModel):
+    summary: str = ""                        # e.g. "Rain starting in ~20 min"
+    starts_in_min: Optional[int] = None      # minutes until precip begins, if any
+    precipitating: bool = False              # precip happening right now
+    points: List[NowcastPoint] = Field(default_factory=list)
 
 
 class WindObservation(BaseModel):
@@ -96,6 +127,7 @@ class WindObservation(BaseModel):
 class Status(BaseModel):
     api_ok: bool = False
     stale: bool = False
+    source: Optional[str] = None             # which provider produced the data
     last_successful_refresh: Optional[str] = None
     last_error: Optional[str] = None
 
@@ -106,4 +138,6 @@ class WeatherData(BaseModel):
     hourly: List[HourlyPoint] = Field(default_factory=list)
     daily: List[DailyPoint] = Field(default_factory=list)
     alerts: List[Alert] = Field(default_factory=list)
+    air_quality: Optional[AirQuality] = None
+    nowcast: Optional[Nowcast] = None
     status: Status = Field(default_factory=Status)

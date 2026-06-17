@@ -21,6 +21,7 @@
       <div class="header-time">
         <div id="clock" class="clock">--:--</div>
         <div id="date" class="date">—</div>
+        <div id="moon" class="moon"></div>
       </div>
       <div class="header-status">
         <span id="status-dot" class="status-dot"></span>
@@ -83,11 +84,17 @@
 
     <!-- Hourly forecast strip -->
     <section class="panel hourly-panel">
-      <div class="panel-title">HOURLY</div>
+      <div class="hourly-head">
+        <div class="panel-title">HOURLY</div>
+        <div id="nowcast" class="nowcast">
+          <span id="nowcast-bar" class="nowcast-bar"></span>
+          <span id="nowcast-summary" class="nowcast-summary"></span>
+        </div>
+      </div>
       <div id="hourly" class="hourly-strip"></div>
     </section>
 
-    <!-- Metrics: humidity / dew point / pressure / UV -->
+    <!-- Metrics -->
     <section class="panel metrics-panel">
       <div class="metric">
         <div class="metric-label">HUMIDITY</div>
@@ -99,11 +106,19 @@
       </div>
       <div class="metric">
         <div class="metric-label">PRESSURE</div>
-        <div class="metric-value"><span id="pressure">--</span><span class="unit" id="pressure-unit">inHg</span></div>
+        <div class="metric-value"><span id="pressure">--</span><span class="unit" id="pressure-unit">inHg</span><span id="pressure-trend" class="trend"></span></div>
       </div>
       <div class="metric">
         <div class="metric-label">UV INDEX</div>
         <div class="metric-value"><span id="uv-index">--</span></div>
+      </div>
+      <div class="metric" id="aqi-metric">
+        <div class="metric-label">AIR QUALITY</div>
+        <div class="metric-value"><span id="aqi">--</span> <span id="aqi-cat" class="aqi-cat"></span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">VISIBILITY</div>
+        <div class="metric-value"><span id="visibility">--</span><span class="unit">mi</span></div>
       </div>
       <div class="metric">
         <div class="metric-label">SUNRISE</div>

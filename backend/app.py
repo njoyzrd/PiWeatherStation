@@ -79,6 +79,16 @@ async def get_alerts():
     return _store().data.alerts
 
 
+@app.get("/api/air_quality")
+async def get_air_quality():
+    return _store().data.air_quality
+
+
+@app.get("/api/nowcast")
+async def get_nowcast():
+    return _store().data.nowcast
+
+
 @app.get("/api/status")
 async def get_status():
     return _store().data.status

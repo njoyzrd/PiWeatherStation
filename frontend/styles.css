@@ -255,8 +255,8 @@ html, body {
   grid-area: metrics;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: clamp(4px, 0.6vw, 10px);
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: clamp(3px, 0.5vw, 8px);
   min-height: 0;
 }
 .metric {
@@ -271,9 +271,37 @@ html, body {
   border-radius: 12px;
 }
 .metric-label { font-size: clamp(0.5rem, 0.7vw, 0.72rem); letter-spacing: 0.1em; color: var(--text-faint); }
-.metric-value { font-size: clamp(0.95rem, 1.5vw, 1.6rem); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 0.05em; line-height: 1.05; }
+.metric-value { font-size: clamp(0.85rem, 1.3vw, 1.45rem); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 0.05em; line-height: 1.05; }
 .metric-value .unit { font-size: 0.5em; color: var(--text-dim); margin-left: 0.2em; font-weight: 600; }
 .metric-value.sun { color: var(--accent-warm); }
+
+/* Pressure trend arrow */
+.trend { font-size: 0.75em; margin-left: 0.15em; font-weight: 700; }
+.trend.up { color: var(--bad); }
+.trend.down { color: var(--accent); }
+.trend.steady { color: var(--text-faint); }
+
+/* Air quality color bands (US AQI) */
+.aqi-cat { font-size: 0.5em; font-weight: 600; letter-spacing: 0.02em; vertical-align: middle; }
+.aqi-0 #aqi, .aqi-0 .aqi-cat { color: #4ade80; }
+.aqi-1 #aqi, .aqi-1 .aqi-cat { color: #facc15; }
+.aqi-2 #aqi, .aqi-2 .aqi-cat { color: #fb923c; }
+.aqi-3 #aqi, .aqi-3 .aqi-cat { color: #f87171; }
+.aqi-4 #aqi, .aqi-4 .aqi-cat { color: #c084fc; }
+.aqi-5 #aqi, .aqi-5 .aqi-cat { color: #fb7185; }
+
+/* Moon phase in the header */
+.moon { font-size: clamp(0.7rem, 0.95vw, 1rem); color: var(--text-dim); margin-top: 0.2em; }
+
+/* Hourly header + precipitation nowcast */
+.hourly-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8em; margin-bottom: 0.4em; }
+.hourly-head .panel-title { margin-bottom: 0; }
+.nowcast { display: flex; align-items: center; gap: 0.5em; min-width: 0; }
+.nowcast-summary { font-size: clamp(0.6rem, 0.85vw, 0.9rem); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowcast-summary.wet { color: var(--accent); }
+.nowcast-bar { display: inline-flex; align-items: flex-end; gap: 1px; height: 0.95em; }
+.nowcast-bar i { width: 3px; min-height: 1px; background: var(--accent); border-radius: 1px; opacity: 0.9; }
+.nowcast-bar i.dry { background: var(--text-faint); opacity: 0.3; }
 
 /* --- Daily ---------------------------------------------------------------- */
 .daily-panel { grid-area: daily; display: flex; flex-direction: column; }

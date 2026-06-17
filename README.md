@@ -21,6 +21,11 @@ Working vertical slice — live data end to end:
   severity-colored banner
 - ✅ Live wind over a WebSocket (`/ws/live`) — nearest NWS station observations
   or a simulator; the wind widget switches to live and falls back to forecast
+- ✅ Air quality (US AQI + PM2.5) via Open-Meteo's free Air Quality API
+- ✅ Precipitation nowcast ("rain starting in ~X min") from Open-Meteo minutely data
+- ✅ Pressure trend, visibility, moon phase, and daily snowfall
+- ✅ Multi-source resilience — Met.no fallback forecast if Open-Meteo is down;
+  the status shows which provider is live
 - ⏳ Kiosk autostart hardening on the Pi (files provided, not yet installed)
 - ⏳ Real-time hardware wind source (Tempest / Ambient / GPIO) — drops into the
   live-wind manager with no frontend changes
@@ -98,6 +103,22 @@ station (WeatherFlow Tempest, Ambient Weather) or a DIY GPIO anemometer as a new
 source in [backend/live_wind.py](backend/live_wind.py); the WebSocket and frontend
 need no changes.
 
+## Data sources & resilience
+
+Each provider feeds the one normalized model, so the frontend never knows which
+source produced the data:
+
+- **Open-Meteo** (free, no key) — current/hourly/daily forecast, minutely
+  precipitation nowcast, air quality, and derived fields (pressure trend,
+  visibility, moon phase, snowfall).
+- **MET Norway / Yr** (free, needs a User-Agent) — **fallback** forecast used
+  automatically if Open-Meteo fails, so an always-on display degrades gracefully.
+- **National Weather Service** (free, no key, U.S.) — severe-weather alerts and
+  nearest-station live wind observations.
+
+`/api/status` reports which provider is live; the header shows `via met.no` when
+running on the fallback.
+
 ## Project layout
 
 ```text
@@ -110,7 +131,9 @@ backend/
   models.py              # normalized Pydantic data model
   utils.py               # config loading, unit conversions, WMO code mapping
   weather_sources/
-    open_meteo.py        # current/hourly/daily forecast fetch + normalize
+    open_meteo.py        # current/hourly/daily forecast + nowcast + derived fields
+    open_meteo_air.py    # air quality (US AQI, PM2.5, ozone)
+    metno.py             # MET Norway (Yr) fallback forecast
     nws.py               # U.S. severe-weather alerts
     nws_station.py       # nearest NWS station live wind observations
     tempest.py           # stub: WeatherFlow Tempest live wind (future)
@@ -133,6 +156,8 @@ kiosk/autostart-example.desktop
 | `GET /api/hourly`  | Hourly forecast (starts at the current hour)    |
 | `GET /api/daily`   | 7-day forecast                                  |
 | `GET /api/alerts`  | Active U.S. NWS alerts (most severe first)      |
+| `GET /api/air_quality` | Current air quality (US AQI, PM2.5, ozone)  |
+| `GET /api/nowcast` | Next-2-hour precipitation nowcast               |
 | `GET /api/status`  | API health / freshness                          |
 | `GET /api/config`  | Frontend-relevant config slice                  |
 | `GET /healthz`     | Liveness probe (used by the kiosk launcher)     |

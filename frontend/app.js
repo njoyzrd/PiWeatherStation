@@ -215,6 +215,9 @@
     $("uv-index").textContent = num(c.uv_index);
     $("sunrise").textContent = fmtClockTime(c.sunrise);
     $("sunset").textContent = fmtClockTime(c.sunset);
+    $("visibility").textContent = num(c.visibility_mi, 1);
+    renderPressureTrend(c.pressure_trend);
+    renderMoon(c);
 
     // Today's hi/lo from daily[0], precip chance from daily[0]
     if (daily && daily[0]) {
@@ -238,6 +241,49 @@
     }
     $("pressure-unit").textContent = "inHg";
     return num(inhg, 2);
+  }
+
+  function renderPressureTrend(trend) {
+    const el = $("pressure-trend");
+    if (trend === "rising") { el.textContent = "▲"; el.className = "trend up"; }
+    else if (trend === "falling") { el.textContent = "▼"; el.className = "trend down"; }
+    else if (trend === "steady") { el.textContent = "→"; el.className = "trend steady"; }
+    else { el.textContent = ""; el.className = "trend"; }
+  }
+
+  function renderMoon(c) {
+    $("moon").textContent = c.moon_icon ? `${c.moon_icon} ${c.moon_phase_name || ""}`.trim() : "";
+  }
+
+  function renderAirQuality(aq) {
+    const metric = $("aqi-metric");
+    if (!aq || aq.us_aqi === null || aq.us_aqi === undefined) {
+      $("aqi").textContent = "--";
+      $("aqi-cat").textContent = "";
+      metric.className = "metric";
+      return;
+    }
+    $("aqi").textContent = aq.us_aqi;
+    $("aqi-cat").textContent = aq.category || "";
+    metric.className = "metric aqi-" + (aq.level != null ? aq.level : 0);
+  }
+
+  function renderNowcast(nc) {
+    const sumEl = $("nowcast-summary");
+    const barEl = $("nowcast-bar");
+    if (!nc) { sumEl.textContent = ""; barEl.innerHTML = ""; sumEl.className = "nowcast-summary"; return; }
+    sumEl.textContent = nc.summary || "";
+    const wet = nc.precipitating || nc.starts_in_min != null;
+    sumEl.className = "nowcast-summary" + (wet ? " wet" : "");
+    const pts = nc.points || [];
+    const max = Math.max(0.02, ...pts.map((p) => p.precip_in || 0));
+    barEl.innerHTML = pts
+      .map((p) => {
+        const v = p.precip_in || 0;
+        const h = v > 0.001 ? Math.max(2, Math.round((v / max) * 14)) : 1;
+        return `<i class="${v > 0.001 ? "" : "dry"}" style="height:${h}px"></i>`;
+      })
+      .join("");
   }
 
   function renderHourly(hourly) {
@@ -269,7 +315,13 @@
         <div class="d-icon">${d.condition_icon || ""}</div>
         <div class="d-temps"><span class="d-hi">${num(d.temp_max_f)}°</span>
           <span class="d-lo">${num(d.temp_min_f)}°</span></div>
-        <div class="d-pop">${pop >= 5 ? "☔ " + num(pop) + "%" : ""}</div>`;
+        <div class="d-pop">${
+          d.snowfall_in > 0
+            ? "❄️ " + num(d.snowfall_in, 1) + "in"
+            : pop >= 5
+            ? "☔ " + num(pop) + "%"
+            : ""
+        }</div>`;
       el.appendChild(div);
     });
   }
@@ -295,7 +347,8 @@
     dot.className = "status-dot";
     if (status && status.api_ok && !status.stale) {
       dot.classList.add("ok");
-      text.textContent = "Live";
+      text.textContent =
+        status.source && status.source !== "open-meteo" ? `Live · via ${status.source}` : "Live";
     } else if (status && status.stale && status.last_successful_refresh) {
       dot.classList.add("stale");
       text.textContent = "Stale data";
@@ -317,6 +370,8 @@
       renderHourly(data.hourly);
       renderDaily(data.daily);
       renderAlerts(data.alerts);
+      renderAirQuality(data.air_quality);
+      renderNowcast(data.nowcast);
       renderStatus(data.status);
 
       if (data.status && data.status.api_ok && data.status.last_successful_refresh) {
