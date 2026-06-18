@@ -183,6 +183,16 @@ async def set_presets(body: PresetsIn):
     return _settings().as_dict()
 
 
+async def _geocode_search(client: httpx.AsyncClient, name: str) -> list:
+    r = await client.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": name, "count": 6, "language": "en", "format": "json"},
+        timeout=10.0,
+    )
+    r.raise_for_status()
+    return r.json().get("results", []) or []
+
+
 @app.get("/api/geocode")
 async def geocode(q: str):
     """Search place names → coordinates + timezone via Open-Meteo's free
@@ -192,17 +202,15 @@ async def geocode(q: str):
         return {"results": []}
     try:
         async with httpx.AsyncClient(headers={"User-Agent": "WeatherPi/0.1"}) as client:
-            r = await client.get(
-                "https://geocoding-api.open-meteo.com/v1/search",
-                params={"name": q, "count": 6, "language": "en", "format": "json"},
-                timeout=10.0,
-            )
-            r.raise_for_status()
-            data = r.json()
+            raw = await _geocode_search(client, q)
+            # Open-Meteo matches plain place names, not "City, State". If a
+            # comma-qualified query finds nothing, retry on the part before it.
+            if not raw and "," in q:
+                raw = await _geocode_search(client, q.split(",", 1)[0].strip())
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"geocoding failed: {exc}")
     results = []
-    for x in data.get("results", []) or []:
+    for x in raw:
         parts = [x.get("name")]
         if x.get("admin1"):
             parts.append(x["admin1"])
