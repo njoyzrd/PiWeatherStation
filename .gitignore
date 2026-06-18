@@ -8,6 +8,8 @@ weatherpi-shot.png
 # Personal/local config and assets — kept out of the public repo.
 # Copy config.example.yaml to config.yaml and add your own location.
 config.yaml
+# Runtime user settings (active location + presets chosen on the settings page).
+settings.json
 frontend/icons/house.png
 # Source aerial/satellite photos of the home (privacy).
 myhouse*.png

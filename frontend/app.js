@@ -515,6 +515,264 @@
     }
   }
 
+  // --- Settings + status overlays ------------------------------------------
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  let settingsState = { active_location: null, presets: [], max_presets: 4 };
+
+  function openOverlay(id) { $(id).classList.remove("hidden"); }
+  function closeOverlay(id) { $(id).classList.add("hidden"); }
+
+  function setMsg(text, kind) {
+    const el = $("set-msg");
+    el.textContent = text || "";
+    el.className = "set-msg" + (kind ? " " + kind : "");
+  }
+
+  function locLabel(loc) {
+    if (!loc) return "—";
+    return loc.name;
+  }
+  function locCoords(loc) {
+    if (!loc) return "";
+    const lat = Number(loc.latitude).toFixed(4);
+    const lon = Number(loc.longitude).toFixed(4);
+    return `${lat}, ${lon}${loc.timezone ? " · " + loc.timezone : ""}`;
+  }
+
+  function renderSettings() {
+    const s = settingsState;
+    $("set-current").innerHTML =
+      `${esc(locLabel(s.active_location))}<small>${esc(locCoords(s.active_location))}</small>`;
+
+    const max = s.max_presets || 4;
+    $("set-preset-count").textContent = `(${s.presets.length}/${max})`;
+    const active = s.active_location || {};
+    $("set-presets").innerHTML = s.presets
+      .map((p, i) => {
+        const isActive =
+          Math.abs((p.latitude || 0) - (active.latitude || 0)) < 1e-4 &&
+          Math.abs((p.longitude || 0) - (active.longitude || 0)) < 1e-4;
+        return `<div class="preset${isActive ? " active" : ""}">
+          <button class="preset-pick" data-pick="${i}" type="button">
+            <span class="pn">${esc(p.name)}</span>
+            <span class="pc">${esc(locCoords(p))}</span>
+          </button>
+          <button class="preset-del" data-del="${i}" type="button" title="Remove preset" aria-label="Remove">✕</button>
+        </div>`;
+      })
+      .join("") || `<div class="set-dim">No presets saved yet.</div>`;
+
+    // Disable "save preset" when full or the active location is already saved.
+    const dupe = s.presets.some(
+      (p) =>
+        Math.abs((p.latitude || 0) - (active.latitude || 0)) < 1e-4 &&
+        Math.abs((p.longitude || 0) - (active.longitude || 0)) < 1e-4
+    );
+    const full = s.presets.length >= max;
+    const btn = $("set-save-preset");
+    btn.disabled = dupe || full || !s.active_location;
+    btn.textContent = full
+      ? `Preset limit reached (${max})`
+      : dupe
+      ? "Current location is already a preset"
+      : "＋ Save current location as a preset";
+  }
+
+  async function loadSettings() {
+    try {
+      const r = await fetch("/api/settings", { cache: "no-store" });
+      if (r.ok) { settingsState = await r.json(); renderSettings(); }
+    } catch (_) { /* ignore */ }
+  }
+
+  async function applyLocation(loc) {
+    setMsg("Switching location…", "busy");
+    try {
+      const r = await fetch("/api/settings/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loc),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      settingsState = await r.json();
+      setMsg("Location updated — refreshing…", "ok");
+      setTimeout(() => location.reload(), 900);
+    } catch (err) {
+      setMsg("Could not change location: " + err.message, "err");
+    }
+  }
+
+  async function putPresets(presets) {
+    const r = await fetch("/api/settings/presets", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ presets }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    settingsState = await r.json();
+    renderSettings();
+  }
+
+  async function searchLocation(q) {
+    const box = $("set-results");
+    box.innerHTML = `<div class="set-dim">Searching…</div>`;
+    try {
+      const r = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const { results } = await r.json();
+      if (!results || !results.length) { box.innerHTML = `<div class="set-dim">No matches.</div>`; return; }
+      box.innerHTML = results
+        .map(
+          (x, i) => `<button class="set-result" data-res="${i}" type="button">
+            <span class="rn">${esc(x.name)}</span>
+            <span class="rc">${Number(x.latitude).toFixed(2)}, ${Number(x.longitude).toFixed(2)}</span>
+          </button>`
+        )
+        .join("");
+      box._results = results;
+    } catch (err) {
+      box.innerHTML = `<div class="set-dim">Search failed: ${esc(err.message)}</div>`;
+    }
+  }
+
+  function wireSettings() {
+    $("btn-settings").addEventListener("click", () => { loadSettings(); setMsg(""); openOverlay("settings-overlay"); });
+
+    $("set-presets").addEventListener("click", async (e) => {
+      const pick = e.target.closest("[data-pick]");
+      const del = e.target.closest("[data-del]");
+      if (pick) { applyLocation(settingsState.presets[+pick.dataset.pick]); return; }
+      if (del) {
+        const i = +del.dataset.del;
+        const next = settingsState.presets.filter((_, idx) => idx !== i);
+        try { await putPresets(next); } catch (err) { setMsg("Could not remove preset: " + err.message, "err"); }
+      }
+    });
+
+    $("set-save-preset").addEventListener("click", async () => {
+      if (!settingsState.active_location) return;
+      const next = settingsState.presets.concat([settingsState.active_location]).slice(0, settingsState.max_presets);
+      try { await putPresets(next); setMsg("Saved to presets.", "ok"); }
+      catch (err) { setMsg("Could not save preset: " + err.message, "err"); }
+    });
+
+    $("set-search-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = $("set-search-input").value.trim();
+      if (q.length >= 2) searchLocation(q);
+    });
+
+    $("set-results").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-res]");
+      if (!btn) return;
+      const results = $("set-results")._results || [];
+      const x = results[+btn.dataset.res];
+      if (x) applyLocation({ name: x.name, latitude: x.latitude, longitude: x.longitude, timezone: x.timezone });
+    });
+
+    $("man-apply").addEventListener("click", () => {
+      const name = $("man-name").value.trim();
+      const lat = parseFloat($("man-lat").value);
+      const lon = parseFloat($("man-lon").value);
+      const tz = $("man-tz").value.trim();
+      if (!name || Number.isNaN(lat) || Number.isNaN(lon)) {
+        setMsg("Enter a name, latitude, and longitude.", "err");
+        return;
+      }
+      applyLocation({ name, latitude: lat, longitude: lon, timezone: tz || null });
+    });
+  }
+
+  // --- Status / raw-data overlay -------------------------------------------
+  function agoFromSeconds(s) {
+    if (s == null) return "never";
+    if (s < 90) return "just now";
+    if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+    return `${Math.floor(s / 86400)} d ago`;
+  }
+  function freshClass(s) { return s != null && s < 1800 ? "src-fresh" : "src-stale"; }
+
+  function humanKey(k) { return k.replace(/_/g, " ").replace(/\bpct\b/, "%").replace(/\binhg\b/i, "inHg").replace(/\bmph\b/i, "mph"); }
+  function fmtVal(v) {
+    if (v === null || v === undefined || v === "") return `<span class="v null">—</span>`;
+    if (typeof v === "boolean") return `<span class="v">${v ? "yes" : "no"}</span>`;
+    if (typeof v === "number") return `<span class="v">${Number.isInteger(v) ? v : v.toFixed(2)}</span>`;
+    return `<span class="v">${esc(v)}</span>`;
+  }
+  function kvTable(obj, skip = []) {
+    const rows = Object.entries(obj || {})
+      .filter(([k]) => !skip.includes(k))
+      .map(([k, v]) => `<div class="row"><span class="k">${esc(humanKey(k))}</span>${fmtVal(v)}</div>`)
+      .join("");
+    return `<div class="kv">${rows}</div>`;
+  }
+
+  function renderStatusData(d) {
+    const body = $("status-body");
+    const srcCards = (d.sources || [])
+      .map((s) => {
+        const cls = s.ok ? "ok" : "bad";
+        const fresh = s.fetched_at ? `<span class="${freshClass(s.age_seconds)}">${agoFromSeconds(s.age_seconds)}</span>` : "never fetched";
+        return `<div class="src-card">
+          <div class="sn"><span class="src-dot ${cls}"></span>${esc(s.name)}</div>
+          <div class="sr">${esc(s.role)}</div>
+          <div class="sa">Updated ${fresh}${s.error ? ` · <span class="src-stale">${esc(s.error)}</span>` : ""}</div>
+        </div>`;
+      })
+      .join("");
+
+    const lw = d.live_wind || {};
+    const lwHtml = lw.latest
+      ? `<div class="data-section"><div class="data-h">Live wind · ${esc(lw.source)} · ${agoFromSeconds(lw.age_seconds)}</div>${kvTable(lw.latest)}</div>`
+      : `<div class="data-section"><div class="data-h">Live wind</div><div class="set-dim">${lw.enabled ? "Waiting for first observation…" : "Disabled"}</div></div>`;
+
+    const sections = [];
+    sections.push(`<div class="src-grid">${srcCards}</div>`);
+    sections.push(`<div class="data-section"><div class="data-h">Location</div>${kvTable(d.location)}</div>`);
+    if (d.current) sections.push(`<div class="data-section"><div class="data-h">Current conditions (all fields)</div>${kvTable(d.current)}</div>`);
+    if (d.air_quality) sections.push(`<div class="data-section"><div class="data-h">Air quality</div>${kvTable(d.air_quality)}</div>`);
+    if (d.nowcast) sections.push(`<div class="data-section"><div class="data-h">Precipitation nowcast</div>${kvTable(d.nowcast, ["points"])}</div>`);
+    sections.push(lwHtml);
+    if (d.alerts && d.alerts.length) {
+      const al = d.alerts.map((a) => kvTable(a)).join('<hr style="border:none;border-top:1px solid rgba(120,160,255,0.1);margin:0.6em 0">');
+      sections.push(`<div class="data-section"><div class="data-h">Active alerts (${d.alerts.length})</div>${al}</div>`);
+    }
+    sections.push(`<details class="data-section"><summary>Hourly forecast — raw (${(d.hourly || []).length} points)</summary><div class="raw-json">${esc(JSON.stringify(d.hourly, null, 2))}</div></details>`);
+    sections.push(`<details class="data-section"><summary>Daily forecast — raw (${(d.daily || []).length} days)</summary><div class="raw-json">${esc(JSON.stringify(d.daily, null, 2))}</div></details>`);
+    body.innerHTML = sections.join("");
+  }
+
+  async function openStatus() {
+    openOverlay("status-overlay");
+    const body = $("status-body");
+    body.innerHTML = `<div class="set-dim">Loading…</div>`;
+    try {
+      const r = await fetch("/api/raw", { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      renderStatusData(await r.json());
+    } catch (err) {
+      body.innerHTML = `<div class="set-msg err">Could not load data: ${esc(err.message)}</div>`;
+    }
+  }
+
+  function wireOverlays() {
+    wireSettings();
+    $("btn-status").addEventListener("click", openStatus);
+    $("status-refresh").addEventListener("click", openStatus);
+    document.querySelectorAll("[data-close]").forEach((b) =>
+      b.addEventListener("click", () => closeOverlay(b.dataset.close)));
+    // Click the dimmed backdrop or press Escape to close.
+    document.querySelectorAll(".overlay").forEach((ov) =>
+      ov.addEventListener("click", (e) => { if (e.target === ov) ov.classList.add("hidden"); }));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") document.querySelectorAll(".overlay").forEach((ov) => ov.classList.add("hidden"));
+    });
+  }
+
   // --- Boot ----------------------------------------------------------------
   async function init() {
     buildCompassTicks();
@@ -529,6 +787,7 @@
     }
 
     setupHouseImage();
+    wireOverlays();
     await refresh();
     const everyMs = Math.max(5, (cfg.refresh && cfg.refresh.frontend_seconds) || 15) * 1000;
     setInterval(refresh, everyMs);

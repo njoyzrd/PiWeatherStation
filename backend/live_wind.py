@@ -56,6 +56,28 @@ class LiveWindManager:
         else:
             log.warning("Unknown live_wind source: %s (disabling)", self.source)
 
+    async def restart(self) -> None:
+        """Restart the wind source (e.g. after the location changes) so it
+        re-resolves the nearest station for the new coordinates. Keeps the
+        connected WebSocket clients; they just start receiving the new feed."""
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+            self._task = None
+        self.latest = None
+        if not self.enabled or self.source in ("off", "none", ""):
+            return
+        if self._client is None:
+            self._client = httpx.AsyncClient(headers={"User-Agent": "WeatherPi/0.1"})
+        if self.source == "simulator":
+            self._task = asyncio.create_task(self._run_simulator())
+        elif self.source == "nws_station":
+            self._task = asyncio.create_task(self._run_nws_station())
+        log.info("Live wind restarted for new location (source=%s)", self.source)
+
     async def stop(self) -> None:
         if self._task:
             self._task.cancel()

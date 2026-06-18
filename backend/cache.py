@@ -42,10 +42,34 @@ class WeatherStore:
         )
         self._client: Optional[httpx.AsyncClient] = None
         self._tasks: list[asyncio.Task] = []
+        # When each section was last successfully fetched (for the status page).
+        self.fetched_at: dict[str, Optional[str]] = {
+            "weather": None,
+            "air_quality": None,
+            "alerts": None,
+        }
 
     @property
     def data(self) -> WeatherData:
         return self._data
+
+    async def set_location(self, loc: dict) -> None:
+        """Switch the active location and immediately re-fetch everything.
+
+        `loc` is a validated dict: name, latitude, longitude, timezone. The cfg
+        dict is shared with the live-wind manager, so updating it here also moves
+        the live wind source to the new coordinates after its restart.
+        """
+        self.cfg["location"] = {
+            "name": loc["name"],
+            "latitude": loc["latitude"],
+            "longitude": loc["longitude"],
+            "timezone": loc.get("timezone"),
+        }
+        log.info("Location changed to %s (%s, %s)", loc["name"], loc["latitude"], loc["longitude"])
+        await self._refresh_weather()
+        if self.cfg.get("features", {}).get("nws_alerts"):
+            await self._refresh_alerts()
 
     # --- lifecycle ---------------------------------------------------------
 
@@ -111,11 +135,12 @@ class WeatherStore:
         self._data.hourly = hourly
         self._data.daily = daily
         self._data.nowcast = nowcast
+        self.fetched_at["weather"] = _now_iso()
         self._data.status = Status(
             api_ok=True,
             stale=False,
             source=source,
-            last_successful_refresh=_now_iso(),
+            last_successful_refresh=self.fetched_at["weather"],
             last_error=None,
         )
         log.info("Weather refreshed via %s: %s°F, %s", source, current.temperature_f, current.condition_text)
@@ -124,11 +149,13 @@ class WeatherStore:
     async def _refresh_air_quality(self) -> None:
         try:
             self._data.air_quality = await open_meteo_air.fetch(self.cfg, self._client)
+            self.fetched_at["air_quality"] = _now_iso()
         except Exception as exc:  # noqa: BLE001 - non-critical
             log.warning("Air quality refresh failed: %s", exc)
 
     async def _refresh_alerts(self) -> None:
         try:
             self._data.alerts = await nws.fetch(self.cfg, self._client)
+            self.fetched_at["alerts"] = _now_iso()
         except Exception as exc:  # noqa: BLE001
             log.warning("Alerts refresh failed: %s", exc)
