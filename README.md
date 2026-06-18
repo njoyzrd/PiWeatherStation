@@ -27,6 +27,10 @@ Working vertical slice — live data end to end:
 - ✅ Pressure trend, visibility, moon phase, and daily snowfall
 - ✅ Multi-source resilience — Met.no fallback forecast if Open-Meteo is down;
   the status shows which provider is live
+- ✅ Settings page (⚙️ on the dashboard) — change location by city search or
+  coordinates, and save up to 4 preset locations to switch between
+- ✅ Status page (📊 on the dashboard) — raw data from every source with
+  freshness, including fields the dashboard doesn't show
 - ⏳ Kiosk autostart hardening on the Pi (files provided, not yet installed)
 - ⏳ Real-time hardware wind source (Tempest / Ambient / GPIO) — drops into the
   live-wind manager with no frontend changes
@@ -120,6 +124,21 @@ source produced the data:
 `/api/status` reports which provider is live; the header shows `via met.no` when
 running on the fallback.
 
+## Settings & status pages
+
+Two icon buttons sit in the top-right of the dashboard:
+
+- **⚙️ Settings** — change the weather-station location without editing files.
+  Search by city name (e.g. `Madison, WI`) or enter coordinates manually;
+  switching re-fetches all data and re-points the live-wind source at the new
+  coordinates. Save up to **4 preset locations** and switch between them with a
+  tap. Choices persist in `settings.json` (gitignored, like `config.yaml`), so
+  they override the config default and survive `git` updates.
+- **📊 Status** — see the **raw data from every source** with how fresh each one
+  is, including fields the dashboard doesn't display (full current-conditions
+  dump, air-quality PM10/ozone/NO₂, the precip nowcast, live-wind details, and
+  active alerts), plus collapsible raw JSON for the hourly and daily forecasts.
+
 ## Project layout
 
 ```text
@@ -165,6 +184,11 @@ scripts/update.sh          # pull latest from GitHub and restart
 | `GET /api/config`  | Frontend-relevant config slice                  |
 | `GET /healthz`     | Liveness probe (used by the kiosk launcher)     |
 | `GET /api/version` | Running code revision (drives kiosk auto-reload)|
+| `GET /api/settings` | Active location + saved presets                |
+| `POST /api/settings/location` | Switch the active location (re-fetches)|
+| `PUT /api/settings/presets` | Replace the preset list (max 4)          |
+| `GET /api/geocode` | Place-name search → coordinates + timezone      |
+| `GET /api/raw`     | Full data from every source + per-source freshness |
 | `WS  /ws/live`     | Live wind feed (nearest NWS station or simulator) |
 
 ## Deploying on the Raspberry Pi
